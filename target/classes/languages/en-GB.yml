@@ -1,0 +1,101 @@
+# ================================================
+# Win9xShopAndPay - British English Language File
+# ================================================
+
+# General Messages
+no-permission: "&cYou don't have permission to use this command!"
+only-player: "&cOnly players can use this command!"
+player-not-online: "&cPlayer is not online!"
+invalid-argument: "&cInvalid argument!"
+
+# Shop Related
+shop-title: "&5Shop - {0}"
+shop-buy-success: "&aPurchase successful! You received {0} {1}"
+shop-insufficient-funds: "&cInsufficient {0}! Need {1}"
+shop-currency-not-available: "&cThis currency cannot be used to purchase this item!"
+shop-click-to-buy: "&7Click to buy"
+shop-price: "&6{0}Price: {1}"
+shop-item-name: "&6Shop Compass"
+text-shop-title: "&6--- Shop Items ---"
+text-shop-item: "&e{0} &7| x{1} | {2}: {3}"
+
+# CDKey Related
+cdkey-redeem-success: "&aRedeemed successfully!"
+cdkey-invalid-or-expired: "&cInvalid or expired CDKey!"
+cdkey-create-success: "&aCDKey created: &e{0}"
+cdkey-create-item: "&7Item: {0} x{1}"
+cdkey-create-max-uses: "&7Max uses: {0}"
+cdkey-create-expiry: "&7Expires in: {0}"
+cdkey-create-permanent: "&7Expires in: Never"
+cdkey-delete-success: "&aCDKey deleted!"
+cdkey-not-found: "&cCDKey not found!"
+cdkey-already-used: "&cYou have already used this CDKey!"
+cdkey-list-title: "&6--- CDKey List ---"
+cdkey-list-entry: "&e{0} &7| {1} x{2} &7| Uses: {3}/{4}{5}"
+cdkey-expiry-permanent: " &7| Expires in: Never"
+cdkey-expiry-info: " &7| Expires in: {0}"
+
+# Currency Related
+currency-balance-title: "&6--- Balances ---"
+currency-balance-entry: "{0}{1}: {2}{3}"
+currency-give-success: "&aGave {0} {1}{2} {3}"
+currency-give-receive: "&aReceived {0}{1} {2}"
+currency-set-success: "&aSet {0}'s {1}{2} to {3}"
+currency-set-receive: "&aYour {0}{1} has been set to {2}"
+currency-list-title: "&6--- Currency List ---"
+currency-list-entry: "{0}{1}{2} - {3}"
+currency-default-tag: "&a [Default]"
+currency-invalid: "&cInvalid currency!"
+
+# Command Help
+help-title: "&6--- Win9xShopAndPay Commands ---"
+help-shop: "&7/wsap shop [currency] - Open shop"
+help-cdkey: "&7/wsap cdkey <subcommand> - CDKey commands"
+help-currency: "&7/wsap currency <subcommand> - Currency commands"
+help-reload: "&7/wsap reload - Reload configuration"
+
+cdkey-help-title: "&6--- CDKey Commands ---"
+cdkey-help-redeem: "&7/wsap cdkey redeem <key> - Redeem CDKey"
+cdkey-help-create: "&7/wsap cdkey create <item> <amount> [uses] [expiry] - Create CDKey"
+cdkey-help-delete: "&7/wsap cdkey delete <key> - Delete CDKey"
+cdkey-help-list: "&7/wsap cdkey list - List CDKeys"
+
+currency-help-title: "&6--- Currency Commands ---"
+currency-help-balance: "&7/wsap currency balance [currency] - Check balance"
+currency-help-list: "&7/wsap currency list - List all currencies"
+currency-help-give: "&7/wsap currency give <player> <currency> <amount> - Give currency"
+currency-help-set: "&7/wsap currency set <player> <currency> <amount> - Set balance"
+
+# Parameter Error Messages
+error-usage-create-cdkey: "&cUsage: /wsap cdkey create <item> <amount> [max-uses] [expiry]"
+error-usage-redeem-cdkey: "&cUsage: /wsap cdkey redeem <key>"
+error-usage-delete-cdkey: "&cUsage: /wsap cdkey delete <key>"
+error-usage-give-currency: "&cUsage: /wsap currency give <player> <currency> <amount>"
+error-usage-set-currency: "&cUsage: /wsap currency set <player> <currency> <amount>"
+
+error-invalid-material: "&cInvalid item type!"
+error-invalid-number: "&cAmount must be a number!"
+error-invalid-max-uses: "&cMax uses must be a number!"
+error-invalid-expiry: "&cInvalid expiry format!"
+
+error-expiry-format: "&7Expiry format: 1d(day), 1h(hour), 30m(minute), 1w(week)"
+error-material-example: "&7Item examples: DIAMOND, EMERALD, IRON_INGOT"
+
+# Reload Command
+reload-success: "&aConfiguration reloaded!"
+
+# Shop Compass Related
+first-join-gift: "&aWelcome to the server! You received a Shop Compass. Right-click to open the shop!"
+give-shop-success: "&aYou received a Shop Compass!"
+give-shop-cooldown: "&cPlease wait {0} seconds before using again!"
+help-give-shop: "&7/wsap give_shop - Get Shop Compass"
+
+# GUI Buy Currency Button
+buy-currency-button: "Buy Other Currencies"
+buy-currency-hint: "Click to buy more currencies"
+buy-currency-message: "&aPlease click the link below to buy currencies:"
+buy-currency-click-here: "[Click Here]"
+
+# AI Assistant Related
+ai-not-enabled: "AI Assistant is not enabled. Please contact an administrator."
+ai-no-permission: "You do not have permission to use AI Assistant."

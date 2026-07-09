@@ -1,0 +1,42 @@
+# ================================================
+# Win9xShopAndPay - 币种配置文件
+# ================================================
+# 
+# 在此文件中配置商店使用的各种币种。
+# 每个币种可以配置不同的存储方式和显示符号。
+# 
+# 存储方式 (storage) 选项:
+# - vault: 使用Vault经济系统（如EssentialsX金币）
+# - config: 使用插件内置存储（数据保存在balances.yml）
+# 
+# 默认币种 (default): 
+# - 将default设为true的币种将作为商店默认使用的币种
+# - 只能有一个币种设为默认
+# 
+# ================================================
+
+currencies:
+  # 金币 - 使用Vault经济系统
+  coins:
+    # 币种显示名称
+    name: "金币"
+    # 币种显示符号（支持emoji）
+    symbol: "💰"
+    # 是否为默认币种
+    default: true
+    # 存储方式: vault 或 config
+    storage: "vault"
+  
+  # 宝石 - 插件内置存储
+  gems:
+    name: "宝石"
+    symbol: "💎"
+    default: false
+    storage: "config"
+  
+  # 代币 - 插件内置存储
+  tokens:
+    name: "代币"
+    symbol: "🎫"
+    default: false
+    storage: "config"

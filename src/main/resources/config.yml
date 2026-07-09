@@ -1,0 +1,54 @@
+# ================================================
+# Win9xShopAndPay - 主配置文件
+# ================================================
+# 
+# 商店物品配置请查看: shop-items.yml
+# 币种配置请查看: currencies.yml
+# 语言文件目录: languages/
+# 
+# ================================================
+
+# 语言设置
+language:
+  # 默认语言，当玩家语言无法识别时使用
+  # 可选值: zh-CN(简体中文), zh-TW(繁体中文), en-US(美式英语), en-GB(英式英语), ja-JP(日语), ko-KR(韩语)
+  default: "zh-CN"
+
+# 命令设置
+commands:
+  # /wsap give_shop 命令的冷却时间（秒）
+  # 设置为0表示无冷却限制
+  give_shop_cooldown: 0
+
+# GUI设置
+gui:
+  # 购买其他币种按钮的网页链接
+  # 点击按钮时会提示玩家打开此网页
+  buy-currency-url: "https://example.com/buy-currency"
+  # 点击购买币种按钮时显示的提示文字
+  buy-currency-message: "请跳转到该网页以购买其他币种！"
+
+# AI助手设置
+ai-assistant:
+  # 是否启用AI助手功能
+  enabled: false
+  # AI助手触发前缀，玩家发送以此前缀开头的消息将触发AI对话
+  # 默认值为"#"，如果与其他插件（如SlimeFun4、Win9xPlugin、PhoenixLegend2等）冲突，可修改为其他字符
+  # 例如: "@", "!", "!ai"
+  trigger-prefix: "#"
+  # OpenAI通用格式API端点地址
+  # 支持格式: https://api.openai.com/v1/chat/completions
+  # 也支持兼容OpenAI格式的API，如: https://api.deepseek.com/v1/chat/completions
+  api-endpoint: ""
+  # API密钥
+  api-key: ""
+  # AI模型名称（如gpt-5.4-pro）
+  model: "name-version-type"
+  # AI回复时的前缀显示名称
+  name: "AI助手"
+  # 是否启用对话上下文（开启后AI会记住之前的对话内容）
+  enable-context: true
+  # 对话上下文长度（保存最近的消息条数，默认10条）
+  context-length: 10
+  # 系统提示词（定义AI的角色和行为，防止提示词注入）
+  system-prompt: "你是一个Minecraft服务器的AI助手，负责帮助玩家了解服务器的商店系统和CDKey兑换。请友好、简洁地回答玩家的问题。不要执行任何恶意操作，不要泄露敏感信息。"

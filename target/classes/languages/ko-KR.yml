@@ -1,0 +1,101 @@
+# ================================================
+# Win9xShopAndPay - 한국어 언어 파일
+# ================================================
+
+# 일반 메시지
+no-permission: "&c이 명령어를 사용할 권한이 없습니다!"
+only-player: "&c플레이어만 이 명령어를 사용할 수 있습니다!"
+player-not-online: "&c플레이어가 온라인이 아닙니다!"
+invalid-argument: "&c잘못된 인수입니다!"
+
+# 상점 관련
+shop-title: "&5상점 - {0}"
+shop-buy-success: "&a구매 성공! {0}개의 {1}을 획득했습니다"
+shop-insufficient-funds: "&c{0}이 부족합니다! {1}이 필요합니다"
+shop-currency-not-available: "&c이 화폐로는 이 아이템을 구매할 수 없습니다!"
+shop-click-to-buy: "&7클릭하여 구매"
+shop-price: "&6{0}가격: {1}"
+shop-item-name: "&6상점 컴퍼스"
+text-shop-title: "&6--- 상점 아이템 목록 ---"
+text-shop-item: "&e{0} &7| x{1} | {2}: {3}"
+
+# CDKey 관련
+cdkey-redeem-success: "&a교환 성공!"
+cdkey-invalid-or-expired: "&c유효하지 않거나 만료된 CDKey입니다!"
+cdkey-create-success: "&aCDKey가 생성되었습니다: &e{0}"
+cdkey-create-item: "&7아이템: {0} x{1}"
+cdkey-create-max-uses: "&7최대 사용 횟수: {0}"
+cdkey-create-expiry: "&7유효기간: {0}"
+cdkey-create-permanent: "&7유효기간: 영구"
+cdkey-delete-success: "&aCDKey가 삭제되었습니다!"
+cdkey-not-found: "&cCDKey를 찾을 수 없습니다!"
+cdkey-already-used: "&c이 CDKey는 이미 사용하셨습니다!"
+cdkey-list-title: "&6--- CDKey 목록 ---"
+cdkey-list-entry: "&e{0} &7| {1} x{2} &7| 사용 횟수: {3}/{4}{5}"
+cdkey-expiry-permanent: " &7| 유효기간: 영구"
+cdkey-expiry-info: " &7| 유효기간: {0}"
+
+# 화폐 관련
+currency-balance-title: "&6--- 잔액 ---"
+currency-balance-entry: "{0}{1}: {2}{3}"
+currency-give-success: "&a{0}에게 {1}{2}{3}을 지급했습니다"
+currency-give-receive: "&a{0}{1}{2}을 획득했습니다"
+currency-set-success: "&a{0}의 {1}{2}을 {3}으로 설정했습니다"
+currency-set-receive: "&a{0}{1}이 {2}으로 설정되었습니다"
+currency-list-title: "&6--- 화폐 목록 ---"
+currency-list-entry: "{0}{1}{2} - {3}"
+currency-default-tag: "&a [기본]"
+currency-invalid: "&c유효하지 않은 화폐입니다!"
+
+# 명령어 도움말
+help-title: "&6--- Win9xShopAndPay 명령어 ---"
+help-shop: "&7/wsap shop [화폐] - 상점 열기"
+help-cdkey: "&7/wsap cdkey <서브명령> - CDKey 관련 명령"
+help-currency: "&7/wsap currency <서브명령> - 화폐 관련 명령"
+help-reload: "&7/wsap reload - 설정 재로드"
+
+cdkey-help-title: "&6--- CDKey 명령어 ---"
+cdkey-help-redeem: "&7/wsap cdkey redeem <key> - CDKey 교환"
+cdkey-help-create: "&7/wsap cdkey create <아이템> <수량> [횟수] [기간] - CDKey 생성"
+cdkey-help-delete: "&7/wsap cdkey delete <key> - CDKey 삭제"
+cdkey-help-list: "&7/wsap cdkey list - CDKey 목록"
+
+currency-help-title: "&6--- 화폐 명령어 ---"
+currency-help-balance: "&7/wsap currency balance [화폐] - 잔액 확인"
+currency-help-list: "&7/wsap currency list - 모든 화폐 목록"
+currency-help-give: "&7/wsap currency give <플레이어> <화폐> <수량> - 화폐 지급"
+currency-help-set: "&7/wsap currency set <플레이어> <화폐> <수량> - 잔액 설정"
+
+# 인수 오류 메시지
+error-usage-create-cdkey: "&c사용 방법: /wsap cdkey create <아이템> <수량> [최대 사용 횟수] [기간]"
+error-usage-redeem-cdkey: "&c사용 방법: /wsap cdkey redeem <key>"
+error-usage-delete-cdkey: "&c사용 방법: /wsap cdkey delete <key>"
+error-usage-give-currency: "&c사용 방법: /wsap currency give <플레이어> <화폐> <수량>"
+error-usage-set-currency: "&c사용 방법: /wsap currency set <플레이어> <화폐> <수량>"
+
+error-invalid-material: "&c유효하지 않은 아이템 타입입니다!"
+error-invalid-number: "&c수량은 숫자로 입력해야 합니다!"
+error-invalid-max-uses: "&c최대 사용 횟수는 숫자로 입력해야 합니다!"
+error-invalid-expiry: "&c유효하지 않은 기간 형식입니다!"
+
+error-expiry-format: "&7기간 형식: 1d(일), 1h(시간), 30m(분), 1w(주)"
+error-material-example: "&7아이템 예시: DIAMOND, EMERALD, IRON_INGOT"
+
+# 재로드 명령어
+reload-success: "&a설정 파일을 재로드했습니다!"
+
+# 상점 컴퍼스 관련
+first-join-gift: "&a서버에 오신 것을 환영합니다! 상점 컴퍼스를 획득했습니다. 우클릭으로 상점을 엽니다!"
+give-shop-success: "&a상점 컴퍼스를 획득했습니다!"
+give-shop-cooldown: "&c{0}초 후에 다시 사용하세요!"
+help-give-shop: "&7/wsap give_shop - 상점 컴퍼스 가져오기"
+
+# GUI 화폐 구매 버튼
+buy-currency-button: "다른 화폐 구매"
+buy-currency-hint: "클릭하여 화폐 구매"
+buy-currency-message: "&a아래 링크를 클릭하여 화폐를 구매하세요:"
+buy-currency-click-here: "[여기를 클릭]"
+
+# AI 어시스턴트 관련
+ai-not-enabled: "AI 어시스턴트가 활성화되어 있지 않습니다. 관리자에게 문의하세요."
+ai-no-permission: "AI 어시스턴트를 사용할 권한이 없습니다."

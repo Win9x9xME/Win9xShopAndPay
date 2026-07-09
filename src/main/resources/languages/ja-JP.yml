@@ -1,0 +1,101 @@
+# ================================================
+# Win9xShopAndPay - 日本語言語ファイル
+# ================================================
+
+# 共通メッセージ
+no-permission: "&cこのコマンドを使用する権限がありません!"
+only-player: "&cプレイヤーのみがこのコマンドを使用できます!"
+player-not-online: "&cプレイヤーはオンラインではありません!"
+invalid-argument: "&c無効な引数です!"
+
+# ショップ関連
+shop-title: "&5ショップ - {0}"
+shop-buy-success: "&a購入成功! {0}個の{1}を獲得しました"
+shop-insufficient-funds: "&c{0}が不足しています! {1}必要です"
+shop-currency-not-available: "&cこの通貨ではこの商品を購入できません!"
+shop-click-to-buy: "&7クリックして購入"
+shop-price: "&6{0}価格: {1}"
+shop-item-name: "&6ショップコンパス"
+text-shop-title: "&6--- ショップアイテムリスト ---"
+text-shop-item: "&e{0} &7| x{1} | {2}: {3}"
+
+# CDKey関連
+cdkey-redeem-success: "&a交換成功!"
+cdkey-invalid-or-expired: "&c無効または期限切れのCDKeyです!"
+cdkey-create-success: "&aCDKeyを作成しました: &e{0}"
+cdkey-create-item: "&7アイテム: {0} x{1}"
+cdkey-create-max-uses: "&7最大使用回数: {0}"
+cdkey-create-expiry: "&7有効期限: {0}"
+cdkey-create-permanent: "&7有効期限: 永久"
+cdkey-delete-success: "&aCDKeyを削除しました!"
+cdkey-not-found: "&cCDKeyが見つかりません!"
+cdkey-already-used: "&cこのCDKeyは既に使用されています!"
+cdkey-list-title: "&6--- CDKeyリスト ---"
+cdkey-list-entry: "&e{0} &7| {1} x{2} &7| 使用回数: {3}/{4}{5}"
+cdkey-expiry-permanent: " &7| 有効期限: 永久"
+cdkey-expiry-info: " &7| 有効期限: {0}"
+
+# 通貨関連
+currency-balance-title: "&6--- 残高 ---"
+currency-balance-entry: "{0}{1}: {2}{3}"
+currency-give-success: "&a{0}に{1}{2}{3}を付与しました"
+currency-give-receive: "&a{0}{1}{2}を獲得しました"
+currency-set-success: "&a{0}の{1}{2}を{3}に設定しました"
+currency-set-receive: "&a{0}{1}が{2}に設定されました"
+currency-list-title: "&6--- 通貨リスト ---"
+currency-list-entry: "{0}{1}{2} - {3}"
+currency-default-tag: "&a [デフォルト]"
+currency-invalid: "&c無効な通貨です!"
+
+# コマンドヘルプ
+help-title: "&6--- Win9xShopAndPayコマンド ---"
+help-shop: "&7/wsap shop [通貨] - ショップを開く"
+help-cdkey: "&7/wsap cdkey <サブコマンド> - CDKey関連コマンド"
+help-currency: "&7/wsap currency <サブコマンド> - 通貨関連コマンド"
+help-reload: "&7/wsap reload - 設定を再読み込み"
+
+cdkey-help-title: "&6--- CDKeyコマンド ---"
+cdkey-help-redeem: "&7/wsap cdkey redeem <key> - CDKeyを交換"
+cdkey-help-create: "&7/wsap cdkey create <アイテム> <数量> [回数] [期限] - CDKeyを作成"
+cdkey-help-delete: "&7/wsap cdkey delete <key> - CDKeyを削除"
+cdkey-help-list: "&7/wsap cdkey list - CDKeyを一覧"
+
+currency-help-title: "&6--- 通貨コマンド ---"
+currency-help-balance: "&7/wsap currency balance [通貨] - 残高を確認"
+currency-help-list: "&7/wsap currency list - 全通貨を一覧"
+currency-help-give: "&7/wsap currency give <プレイヤー> <通貨> <数量> - 通貨を付与"
+currency-help-set: "&7/wsap currency set <プレイヤー> <通貨> <数量> - 残高を設定"
+
+# 引数エラーメッセージ
+error-usage-create-cdkey: "&c使用方法: /wsap cdkey create <アイテム> <数量> [最大使用回数] [期限]"
+error-usage-redeem-cdkey: "&c使用方法: /wsap cdkey redeem <key>"
+error-usage-delete-cdkey: "&c使用方法: /wsap cdkey delete <key>"
+error-usage-give-currency: "&c使用方法: /wsap currency give <プレイヤー> <通貨> <数量>"
+error-usage-set-currency: "&c使用方法: /wsap currency set <プレイヤー> <通貨> <数量>"
+
+error-invalid-material: "&c無効なアイテムタイプです!"
+error-invalid-number: "&c数量は数字で入力してください!"
+error-invalid-max-uses: "&c最大使用回数は数字で入力してください!"
+error-invalid-expiry: "&c無効な期限形式です!"
+
+error-expiry-format: "&7期限形式: 1d(日), 1h(時間), 30m(分), 1w(週)"
+error-material-example: "&7アイテム例: DIAMOND, EMERALD, IRON_INGOT"
+
+# 再読み込みコマンド
+reload-success: "&a設定ファイルを再読み込みしました!"
+
+# ショップコンパス関連
+first-join-gift: "&aサーバーへようこそ! ショップコンパスを獲得しました。右クリックでショップを開きます!"
+give-shop-success: "&aショップコンパスを獲得しました!"
+give-shop-cooldown: "&c{0}秒後に再度使用してください!"
+help-give-shop: "&7/wsap give_shop - ショップコンパスを取得"
+
+# GUI通貨購入ボタン
+buy-currency-button: "他の通貨を購入"
+buy-currency-hint: "クリックして通貨を購入"
+buy-currency-message: "&a下のリンクをクリックして通貨を購入してください:"
+buy-currency-click-here: "[ここをクリック]"
+
+# AIアシスタント関連
+ai-not-enabled: "AIアシスタントが有効になっていません。管理者に連絡してください。"
+ai-no-permission: "AIアシスタントを使用する権限がありません。"

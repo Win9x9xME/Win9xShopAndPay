@@ -1,0 +1,55 @@
+name: Win9xShopAndPay
+main: com.win9x.shopandpay.Win9xShopAndPay
+version: ${project.version}
+api-version: 1.20
+description: 一个拥有图形化购买界面和CDKey系统的商店插件，支持多币种和Vault经济系统
+author: Win9x
+depend: [Vault]
+
+commands:
+  win9xshopandpay:
+    description: Win9xShopAndPay主命令
+    usage: /win9xshopandpay <shop/cdkey/currency/reload>
+    aliases: [wsap]
+    permission: win9xshopandpay.use
+
+permissions:
+  win9xshopandpay.use:
+    description: 使用主命令的权限
+    default: true
+  win9xshopandpay.shop:
+    description: 打开商店的权限
+    default: true
+  win9xshopandpay.cdkey.redeem:
+    description: 兑换CDKey的权限
+    default: true
+  win9xshopandpay.cdkey.create:
+    description: 创建CDKey的权限
+    default: op
+  win9xshopandpay.cdkey.delete:
+    description: 删除CDKey的权限
+    default: op
+  win9xshopandpay.cdkey.list:
+    description: 列出CDKey的权限
+    default: op
+  win9xshopandpay.currency.balance:
+    description: 查看余额的权限
+    default: true
+  win9xshopandpay.currency.give:
+    description: 给予币种的权限
+    default: op
+  win9xshopandpay.currency.set:
+    description: 设置余额的权限
+    default: op
+  win9xshopandpay.currency.list:
+    description: 列出币种的权限
+    default: true
+  win9xshopandpay.reload:
+    description: 重新加载配置的权限
+    default: op
+  win9xshopandpay.give_shop:
+    description: 获取商店指南针的权限
+    default: true
+  win9xshopandpay.ai.use:
+    description: 使用AI助手的权限
+    default: true

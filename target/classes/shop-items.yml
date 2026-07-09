@@ -1,0 +1,75 @@
+# ================================================
+# Win9xShopAndPay - 商店物品配置文件
+# ================================================
+# 
+# 在此文件中配置商店出售的物品。
+# 
+# 配置项说明:
+# - type: 物品类型（必须是有效的Material名称，如DIAMOND, EMERALD）
+# - amount: 物品数量
+# - name: 物品显示名称（支持颜色代码，用&符号，如&b钻石）
+# - slot: 在商店GUI中的位置（0-26，对应3x9格子）
+# - prices: 各币种的价格，key为币种ID（需在currencies.yml中定义）
+# 
+# GUI位置说明（27格）:
+#  0  1  2  3  4  5  6  7  8
+#  9 10 11 12 13 14 15 16 17
+# 18 19 20 21 22 23 24 25 26
+# 
+# ================================================
+
+shop-items:
+  # 钻石配置
+  diamond:
+    type: DIAMOND
+    amount: 1
+    name: "&b钻石"
+    slot: 11
+    prices:
+      coins: 100.0
+      gems: 10.0
+      tokens: 50.0
+  
+  # 绿宝石配置
+  emerald:
+    type: EMERALD
+    amount: 5
+    name: "&a绿宝石"
+    slot: 12
+    prices:
+      coins: 50.0
+      gems: 5.0
+      tokens: 25.0
+  
+  # 铁锭配置
+  iron_ingot:
+    type: IRON_INGOT
+    amount: 10
+    name: "&f铁锭"
+    slot: 13
+    prices:
+      coins: 20.0
+      gems: 2.0
+      tokens: 10.0
+  
+  # 金锭配置
+  gold_ingot:
+    type: GOLD_INGOT
+    amount: 5
+    name: "&6金锭"
+    slot: 14
+    prices:
+      coins: 50.0
+      gems: 5.0
+      tokens: 25.0
+  
+  # 下界合金锭配置
+  netherite_ingot:
+    type: NETHERITE_INGOT
+    amount: 1
+    name: "&7下界合金锭"
+    slot: 15
+    prices:
+      coins: 500.0
+      gems: 50.0
+      tokens: 250.0

@@ -1,0 +1,101 @@
+# ================================================
+# Win9xShopAndPay - 繁體中文語言檔
+# ================================================
+
+# 通用消息
+no-permission: "&c沒有權限使用此命令!"
+only-player: "&c只有玩家可以使用此命令!"
+player-not-online: "&c玩家不在線!"
+invalid-argument: "&c無效的參數!"
+
+# 商店相關
+shop-title: "&5商店 - {0}"
+shop-buy-success: "&a購買成功! 獲得 {0} 個 {1}"
+shop-insufficient-funds: "&c{0}不足! 需要 {1}"
+shop-currency-not-available: "&c該幣種不可購買此商品!"
+shop-click-to-buy: "&7點擊購買"
+shop-price: "&6{0}價格: {1}"
+shop-item-name: "&6商店指南針"
+text-shop-title: "&6--- 商店物品列表 ---"
+text-shop-item: "&e{0} &7| x{1} | {2}: {3}"
+
+# CDKey相關
+cdkey-redeem-success: "&a兌換成功!"
+cdkey-invalid-or-expired: "&c無效或已過期的CDKey!"
+cdkey-create-success: "&aCDKey 創建成功: &e{0}"
+cdkey-create-item: "&7物品: {0} x{1}"
+cdkey-create-max-uses: "&7最大使用次數: {0}"
+cdkey-create-expiry: "&7有效期: {0}"
+cdkey-create-permanent: "&7有效期: 永久"
+cdkey-delete-success: "&aCDKey 刪除成功!"
+cdkey-not-found: "&cCDKey不存在!"
+cdkey-already-used: "&c你已經使用過這個CDKey了!"
+cdkey-list-title: "&6--- CDKey 列表 ---"
+cdkey-list-entry: "&e{0} &7| {1} x{2} &7| 使用次數: {3}/{4}{5}"
+cdkey-expiry-permanent: " &7| 有效期: 永久"
+cdkey-expiry-info: " &7| 有效期: {0}"
+
+# 幣種相關
+currency-balance-title: "&6--- 餘額 ---"
+currency-balance-entry: "{0}{1}: {2}{3}"
+currency-give-success: "&a已給予 {0} {1}{2} {3}"
+currency-give-receive: "&a獲得 {0}{1} {2}"
+currency-set-success: "&a已設定 {0} 的 {1}{2} 為 {3}"
+currency-set-receive: "&a{0}{1} 已被設定為 {2}"
+currency-list-title: "&6--- 幣種列表 ---"
+currency-list-entry: "{0}{1}{2} - {3}"
+currency-default-tag: "&a [默認]"
+currency-invalid: "&c無效的幣種!"
+
+# 命令幫助
+help-title: "&6--- Win9xShopAndPay 命令 ---"
+help-shop: "&7/wsap shop [幣種] - 打開商店"
+help-cdkey: "&7/wsap cdkey <子命令> - CDKey相關命令"
+help-currency: "&7/wsap currency <子命令> - 幣種相關命令"
+help-reload: "&7/wsap reload - 重新載入配置"
+
+cdkey-help-title: "&6--- CDKey 命令 ---"
+cdkey-help-redeem: "&7/wsap cdkey redeem <key> - 兌換CDKey"
+cdkey-help-create: "&7/wsap cdkey create <物品> <數量> [次數] [有效期] - 創建CDKey"
+cdkey-help-delete: "&7/wsap cdkey delete <key> - 刪除CDKey"
+cdkey-help-list: "&7/wsap cdkey list - 列出CDKey"
+
+currency-help-title: "&6--- 幣種命令 ---"
+currency-help-balance: "&7/wsap currency balance [幣種] - 查看餘額"
+currency-help-list: "&7/wsap currency list - 列出所有幣種"
+currency-help-give: "&7/wsap currency give <玩家> <幣種> <數量> - 給予幣種"
+currency-help-set: "&7/wsap currency set <玩家> <幣種> <數量> - 設定餘額"
+
+# 參數錯誤提示
+error-usage-create-cdkey: "&c用法: /wsap cdkey create <物品類型> <數量> [最大使用次數] [有效期]"
+error-usage-redeem-cdkey: "&c用法: /wsap cdkey redeem <key>"
+error-usage-delete-cdkey: "&c用法: /wsap cdkey delete <key>"
+error-usage-give-currency: "&c用法: /wsap currency give <玩家名> <幣種> <數量>"
+error-usage-set-currency: "&c用法: /wsap currency set <玩家名> <幣種> <數量>"
+
+error-invalid-material: "&c無效的物品類型!"
+error-invalid-number: "&c數量必須是數字!"
+error-invalid-max-uses: "&c最大使用次數必須是數字!"
+error-invalid-expiry: "&c無效的有效期格式!"
+
+error-expiry-format: "&7有效期格式: 1d(天), 1h(小時), 30m(分鐘), 1w(周)"
+error-material-example: "&7物品類型示例: DIAMOND, EMERALD, IRON_INGOT"
+
+# 重載命令
+reload-success: "&a配置文件已重新載入!"
+
+# 商店指南針相關
+first-join-gift: "&a歡迎來到服務器! 獲得商店指南針，右鍵打開商店!"
+give-shop-success: "&a獲得商店指南針!"
+give-shop-cooldown: "&c請等待 {0} 秒後再使用!"
+help-give-shop: "&7/wsap give_shop - 獲取商店指南針"
+
+# GUI購買幣種按鈕
+buy-currency-button: "購買其他幣種"
+buy-currency-hint: "點擊購買更多幣種"
+buy-currency-message: "&a請點擊下方鏈接購買幣種:"
+buy-currency-click-here: "[點擊這裡]"
+
+# AI助手相關
+ai-not-enabled: "AI助手未啟用，請聯繫管理員配置。"
+ai-no-permission: "你沒有使用AI助手的權限。"
