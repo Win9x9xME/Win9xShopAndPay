@@ -3,7 +3,8 @@ package com.win9x.shopandpay.gui;
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.manager.CurrencyManager;
 import com.win9x.shopandpay.manager.LanguageManager;
-import org.bukkit.ChatColor;
+import com.win9x.shopandpay.util.ColorCodeConverter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -21,6 +22,7 @@ public class ShopItemListener implements Listener {
     private final CurrencyManager currencyManager;
     private final LanguageManager languageManager;
     private final NamespacedKey shopCompassKey;
+    private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
 
     public ShopItemListener(Win9xShopAndPay plugin) {
         this.plugin = plugin;
@@ -63,8 +65,8 @@ public class ShopItemListener implements Listener {
         ItemMeta meta = compass.getItemMeta();
         
         if (meta != null) {
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-                    languageManager.getMessage("shop-item-name", player)));
+            String displayName = languageManager.getMessage("shop-item-name", player);
+            meta.setDisplayName(displayName.replace("&", "§"));
             meta.setCustomModelData(1);
             
             PersistentDataContainer container = meta.getPersistentDataContainer();

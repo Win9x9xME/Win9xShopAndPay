@@ -5,6 +5,7 @@
 - [AI助手配置](#ai助手配置)
 - [添加币种](#添加币种)
 - [添加商品](#添加商品)
+- [抽奖机配置](#抽奖机配置)
 - [命令列表](#命令列表)
 - [权限说明](#权限说明)
 
@@ -86,6 +87,7 @@ system-prompt: "你是一个Minecraft服务器的AI助手，负责帮助玩家�
 ```yaml
 api-endpoint: "https://api.openai.com/v1/chat/completions"
 api-key: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+model: "gpt-3.5-turbo"
 ```
 
 #### DeepSeek
@@ -95,14 +97,75 @@ api-key: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 model: "deepseek-chat"
 ```
 
-#### 其他兼容API
+#### GLM（智谱）
 ```yaml
-api-endpoint: "https://api.example.com/v1/chat/completions"
-api-key: "your-api-key"
-model: "your-model-name"
+api-endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+api-key: "your-glm-key"
+model: "glm-4"
 ```
 
-### 5. 使用方法
+#### 豆包
+```yaml
+api-endpoint: "https://api.doubao.com/v1/chat/completions"
+api-key: "your-doubao-key"
+model: "doubao-3"
+```
+
+#### Qwen（通义千问）
+```yaml
+api-endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+api-key: "your-qwen-key"
+model: "qwen-turbo"
+```
+
+#### Kimi（月之暗面）
+```yaml
+api-endpoint: "https://api.moonshot.cn/v1/chat/completions"
+api-key: "your-kimi-key"
+model: "moonshot-v1-8k"
+```
+
+#### 混元（腾讯）
+```yaml
+api-endpoint: "https://hunyuan.tencentcloudapi.com/v1/chat/completions"
+api-key: "your-hunyuan-key"
+model: "hunyuan-standard"
+```
+
+#### Anthropic（Claude）
+```yaml
+api-endpoint: "https://api.anthropic.com/v1/messages"
+api-key: "your-anthropic-key"
+model: "claude-3-sonnet-20240229"
+api-format: "anthropic"
+```
+
+#### Minimax
+```yaml
+api-endpoint: "https://api.minimax.chat/v1/text/chatcompletion"
+api-key: "your-minimax-key"
+model: "abab5-chat"
+api-format: "minimax"
+```
+
+#### 自定义格式
+```yaml
+api-format: "custom"
+request-template: '{"model":"{model}","messages":{messages},"max_tokens":2048}'
+response-path: "choices.0.message.content"
+```
+
+### 5. API格式说明
+
+| 格式 | 适用API | 说明 |
+|------|---------|------|
+| `openai` | OpenAI、DeepSeek、GLM、豆包、Qwen、Kimi、混元 | 默认格式，使用messages数组 |
+| `anthropic` | Anthropic Claude | 使用content数组，system消息单独处理 |
+| `spark` | 讯飞星火 | 星火专用格式 |
+| `minimax` | Minimax | 使用prompt和role字段 |
+| `custom` | 其他API | 自定义请求模板和响应路径 |
+
+### 6. 使用方法
 
 玩家在聊天中输入触发前缀开头的消息即可与AI对话：
 
@@ -234,15 +297,45 @@ shop-items:
 
 ### 3. GUI位置布局
 
+商店GUI为6x9布局（54格）：
+
 ```
 ┌─────────────────────────────┐
-│ 0  1  2  3  4  5  6  7  8 │
-│ 9 10 11 12 13 14 15 16 17 │
-│18 19 20 21 22 23 24 25 26 │  ← 26为购买币种按钮
+│ ← 币种1 币种2 ... 币种7 → │  第一行：币种分类栏（支持翻页）
+│                             │
+│   商品展示区（36格）        │  第二至五行：商品展示（支持翻页）
+│                             │
+│                             │
+│                             │
+│ ← 搜索   [购买币种]    → │  第六行：搜索和翻页
 └─────────────────────────────┘
 ```
 
-### 4. 支持的物品类型
+**布局说明：**
+- 第一行（槽位0-8）：币种分类栏
+  - 槽位0：币种翻页（上一页）
+  - 槽位1-7：币种图标（金锭=选中，铁锭=未选中）
+  - 槽位8：币种翻页（下一页）
+- 第二至五行（槽位9-44）：商品展示区（36格）
+- 第六行（槽位45-53）：搜索栏
+  - 槽位45：商品翻页（上一页）
+  - 槽位46：搜索框（点击输入搜索关键词）
+  - 槽位47-51：占位符
+  - 槽位52：购买其他币种按钮
+  - 槽位53：商品翻页（下一页）
+
+### 4. 搜索功能
+
+点击搜索框后，输入物品名称即可过滤商品：
+
+```
+请输入要搜索的物品名称:
+> DIAMOND
+```
+
+搜索支持部分匹配，例如输入 "dia" 会匹配 "DIAMOND"、"DIAMOND_SWORD" 等。
+
+### 5. 支持的物品类型
 
 所有Minecraft物品类型均可使用，常用示例：
 
@@ -258,6 +351,126 @@ shop-items:
 | ENCHANTED_GOLDEN_APPLE | 附魔金苹果 |
 
 ### 5. 重载配置
+
+修改配置后，使用以下命令重载：
+
+```
+/wsap reload
+```
+
+---
+
+## 抽奖机配置
+
+### 1. 编辑抽奖配置文件
+
+打开 `plugins/Win9xShopAndPay/lottery.yml`：
+
+```yaml
+# 抽奖配置
+lottery:
+  cost:
+    # 抽奖消耗的币种ID（必须在currencies.yml中定义）
+    currency-id: "coins"
+    # 每次抽奖消耗的金额
+    amount: 100.0
+  
+  # 奖品列表
+  prizes:
+    # 奖品ID（唯一标识）
+    common_1:
+      # 物品类型（Minecraft物品ID）
+      type: "DIAMOND"
+      # 物品数量
+      amount: 1
+      # 权重（越高，中奖概率越大）
+      weight: 30.0
+      # 显示名称（可选，支持颜色代码）
+      display-name: "&f钻石"
+      # 稀有度：common, uncommon, rare, epic, legendary
+      rarity: "common"
+    
+    # 稀有奖品示例
+    legendary_1:
+      type: "NETHER_STAR"
+      amount: 1
+      weight: 2.0
+      display-name: "&d下界之星"
+      rarity: "legendary"
+```
+
+### 2. 配置说明
+
+| 配置项 | 说明 |
+|--------|------|
+| `currency-id` | 抽奖消耗的币种ID（需在currencies.yml中定义） |
+| `amount` | 每次抽奖消耗的金额（不能为负数） |
+| `type` | Minecraft物品ID（如DIAMOND、NETHER_STAR） |
+| `amount` | 中奖后获得的物品数量（不能为负数） |
+| `weight` | 权重（越高，中奖概率越大，不能为负数） |
+| `display-name` | 显示名称（支持颜色代码，如&f、&6） |
+| `rarity` | 稀有度：common（普通）、uncommon（优秀）、rare（稀有）、epic（史诗）、legendary（传说） |
+
+### 3. 权重计算说明
+
+抽奖采用加权随机算法，每个奖品的中奖概率 = 该奖品权重 / 总权重。
+
+**示例：**
+```yaml
+prizes:
+  prize_a:
+    weight: 30.0
+  prize_b:
+    weight: 10.0
+  prize_c:
+    weight: 2.0
+```
+
+- 总权重 = 30 + 10 + 2 = 42
+- prize_a 概率 = 30/42 ≈ 71.4%
+- prize_b 概率 = 10/42 ≈ 23.8%
+- prize_c 概率 = 2/42 ≈ 4.8%
+
+### 4. 抽奖冷却时间配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+lottery:
+  # 抽奖按钮冷却时间（秒）
+  # 设置为0表示无冷却限制
+  draw-cooldown: 5
+```
+
+### 5. 抽奖机界面
+
+抽奖机GUI为3x9布局（27格）：
+
+```
+┌─────────────────────────────┐
+│  ██████ ██████ ██████       │  第一行：装饰边框
+│                             │
+│  [奖品] [奖品] [奖品]        │  第二行：奖品展示区（旋转动画）
+│     [奖品] [奖品]           │
+│                             │
+│     [关闭] [抽奖]           │  第三行：操作按钮
+└─────────────────────────────┘
+```
+
+**操作说明：**
+- 点击「抽奖」按钮：消耗指定币种进行抽奖
+- 抽奖时有1.5秒的旋转动画
+- 中奖后物品直接发放到玩家背包
+
+### 6. 使用方法
+
+玩家使用命令打开抽奖机：
+
+```
+/wsap lottery
+```
+
+### 7. 重载配置
 
 修改配置后，使用以下命令重载：
 
@@ -286,6 +499,7 @@ shop-items:
 | `/wsap cdkey create <物品> <数量> [次数] [有效期]` | 创建CDKey | OP |
 | `/wsap cdkey delete <key>` | 删除CDKey | OP |
 | `/wsap cdkey list` | 列出所有CDKey | OP |
+| `/wsap lottery` | 打开抽奖机 | 所有玩家 |
 | `/wsap currency balance` | 查看余额 | 所有玩家 |
 | `/wsap currency balance <币种>` | 查看指定币种余额 | 所有玩家 |
 | `/wsap currency list` | 列出所有币种 | 所有玩家 |
@@ -332,6 +546,7 @@ shop-items:
 | `win9xshopandpay.currency.give` | 给予币种 | op |
 | `win9xshopandpay.currency.set` | 设置余额 | op |
 | `win9xshopandpay.give_shop` | 获取商店指南针 | true |
+| `win9xshopandpay.lottery` | 使用抽奖机 | true |
 | `win9xshopandpay.ai.use` | 使用AI助手 | true |
 | `win9xshopandpay.reload` | 重载配置 | op |
 
@@ -361,6 +576,7 @@ plugins/Win9xShopAndPay/
 ├── config.yml              # 主配置文件
 ├── currencies.yml          # 币种配置
 ├── shop-items.yml          # 商店物品配置
+├── lottery.yml             # 抽奖配置
 ├── cdkeys.yml              # CDKey数据（自动生成）
 ├── balances.yml            # 玩家余额数据（自动生成）
 ├── players.txt             # 已领取指南针的玩家（自动生成）

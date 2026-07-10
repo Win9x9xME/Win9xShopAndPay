@@ -3,6 +3,7 @@ package com.win9x.shopandpay.listener;
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.gui.ShopItemListener;
 import com.win9x.shopandpay.manager.LanguageManager;
+import com.win9x.shopandpay.util.ColorCodeConverter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -66,7 +67,7 @@ public class PlayerJoinListener implements Listener {
         if (!joinedPlayers.contains(playerId)) {
             ItemStack compass = ShopItemListener.createShopCompass(plugin, player);
             player.getInventory().addItem(compass);
-            player.sendMessage(languageManager.getMessage("first-join-gift", player));
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("first-join-gift", player));
             savePlayer(playerId);
         }
     }

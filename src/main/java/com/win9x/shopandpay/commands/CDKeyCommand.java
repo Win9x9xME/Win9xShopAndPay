@@ -3,7 +3,8 @@ package com.win9x.shopandpay.commands;
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.CDKey;
 import com.win9x.shopandpay.manager.CDKeyManager;
-import org.bukkit.ChatColor;
+import com.win9x.shopandpay.manager.LanguageManager;
+import com.win9x.shopandpay.util.ColorCodeConverter;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,10 +16,12 @@ public class CDKeyCommand implements CommandExecutor {
 
     private final Win9xShopAndPay plugin;
     private final CDKeyManager cdKeyManager;
+    private final LanguageManager languageManager;
 
     public CDKeyCommand(Win9xShopAndPay plugin) {
         this.plugin = plugin;
         this.cdKeyManager = plugin.getCDKeyManager();
+        this.languageManager = plugin.getLanguageManager();
     }
 
     @Override
@@ -45,12 +48,12 @@ public class CDKeyCommand implements CommandExecutor {
 
     private boolean redeemCDKey(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "只有玩家可以使用此命令!");
+            sendMessage(sender, "only-player");
             return true;
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /cdkey redeem <key>");
+            sendMessage(sender, "error-usage-redeem-cdkey");
             return true;
         }
 
@@ -59,29 +62,29 @@ public class CDKeyCommand implements CommandExecutor {
 
         CDKeyManager.RedeemResult result = cdKeyManager.redeemCDKey(key, player);
         if (result == CDKeyManager.RedeemResult.NOT_FOUND) {
-            player.sendMessage(ChatColor.RED + "CDKey不存在!");
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-not-found", player));
             return true;
         } else if (result == CDKeyManager.RedeemResult.EXPIRED) {
-            player.sendMessage(ChatColor.RED + "CDKey已过期!");
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-invalid-or-expired", player));
             return true;
         } else if (result == CDKeyManager.RedeemResult.ALREADY_USED) {
-            player.sendMessage(ChatColor.RED + "你已经使用过这个CDKey了!");
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-already-used", player));
             return true;
         }
 
-        player.sendMessage(ChatColor.GREEN + "兑换成功!");
+        ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-redeem-success", player));
         return true;
     }
 
     private boolean createCDKey(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.create")) {
-            sender.sendMessage(ChatColor.RED + "没有权限使用此命令!");
+            sendMessage(sender, "no-permission");
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(ChatColor.RED + "用法: /cdkey create <物品类型> <数量> [最大使用次数]");
-            sender.sendMessage(ChatColor.GRAY + "物品类型示例: DIAMOND, EMERALD, IRON_INGOT");
+            sendMessage(sender, "error-usage-create-cdkey");
+            sendMessage(sender, "error-material-example");
             return true;
         }
 
@@ -89,7 +92,7 @@ public class CDKeyCommand implements CommandExecutor {
         try {
             material = Material.valueOf(args[1].toUpperCase());
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(ChatColor.RED + "无效的物品类型!");
+            sendMessage(sender, "error-invalid-material");
             return true;
         }
 
@@ -97,7 +100,7 @@ public class CDKeyCommand implements CommandExecutor {
         try {
             amount = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "数量必须是数字!");
+            sendMessage(sender, "error-invalid-number");
             return true;
         }
 
@@ -106,7 +109,7 @@ public class CDKeyCommand implements CommandExecutor {
             try {
                 maxUses = Integer.parseInt(args[3]);
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.RED + "最大使用次数必须是数字!");
+                sendMessage(sender, "error-invalid-max-uses");
                 return true;
             }
         }
@@ -114,63 +117,119 @@ public class CDKeyCommand implements CommandExecutor {
         ItemStack item = new ItemStack(material, amount);
         String key = cdKeyManager.generateCDKey(item, maxUses, 0);
 
-        sender.sendMessage(ChatColor.GREEN + "CDKey 创建成功: " + ChatColor.YELLOW + key);
-        sender.sendMessage(ChatColor.GRAY + "物品: " + material.name() + " x" + amount);
-        sender.sendMessage(ChatColor.GRAY + "最大使用次数: " + maxUses);
+        sendMessage(sender, "cdkey-create-success", key);
+        sendMessage(sender, "cdkey-create-item", material.name(), amount);
+        sendMessage(sender, "cdkey-create-max-uses", maxUses);
         return true;
     }
 
     private boolean deleteCDKey(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.delete")) {
-            sender.sendMessage(ChatColor.RED + "没有权限使用此命令!");
+            sendMessage(sender, "no-permission");
             return true;
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /cdkey delete <key>");
+            sendMessage(sender, "error-usage-delete-cdkey");
             return true;
         }
 
         String key = args[1].toUpperCase();
         
         if (!cdKeyManager.deleteCDKey(key)) {
-            sender.sendMessage(ChatColor.RED + "CDKey不存在!");
+            sendMessage(sender, "cdkey-not-found");
             return true;
         }
 
-        sender.sendMessage(ChatColor.GREEN + "CDKey 删除成功!");
+        sendMessage(sender, "cdkey-delete-success");
         return true;
     }
 
     private boolean listCDKeys(CommandSender sender) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.list")) {
-            sender.sendMessage(ChatColor.RED + "没有权限使用此命令!");
+            sendMessage(sender, "no-permission");
             return true;
         }
 
-        sender.sendMessage(ChatColor.GOLD + "--- CDKey 列表 ---");
+        sendMessage(sender, "cdkey-list-title");
         
         for (CDKey cdKey : cdKeyManager.getAllCDKeys()) {
-            sender.sendMessage(ChatColor.YELLOW + cdKey.getKey() + 
-                    ChatColor.GRAY + " | " + cdKey.getItem().getType().name() + 
-                    " x" + cdKey.getItem().getAmount() + 
-                    ChatColor.GRAY + " | 使用次数: " + cdKey.getUses() + "/" + cdKey.getMaxUses());
+            String expiryInfo = "";
+            if (cdKey.hasExpiryDate()) {
+                expiryInfo = getMessage("cdkey-expiry-info", sender, formatExpiryTime(cdKey.getExpiryTime()));
+            } else {
+                expiryInfo = getMessage("cdkey-expiry-permanent", sender);
+            }
+            
+            sendMessage(sender, "cdkey-list-entry", 
+                    cdKey.getKey(), cdKey.getItem().getType().name(), 
+                    cdKey.getItem().getAmount(), cdKey.getUses(), cdKey.getMaxUses(), expiryInfo);
         }
 
         return true;
     }
 
+    private String formatExpiryTime(long expiryTime) {
+        long remaining = expiryTime - System.currentTimeMillis();
+        if (remaining <= 0) {
+            return "已过期";
+        }
+
+        long days = remaining / (24L * 60 * 60 * 1000);
+        remaining %= (24L * 60 * 60 * 1000);
+        long hours = remaining / (60L * 60 * 1000);
+        remaining %= (60L * 60 * 1000);
+        long minutes = remaining / (60L * 1000);
+
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) sb.append(days).append("天");
+        if (hours > 0) sb.append(hours).append("小时");
+        if (minutes > 0) sb.append(minutes).append("分钟");
+        
+        return sb.toString();
+    }
+
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "--- Win9xShopAndPay CDKey 命令 ---");
-        sender.sendMessage(ChatColor.GRAY + "/cdkey redeem <key> - 兑换CDKey");
+        sendMessage(sender, "cdkey-help-title");
+        sendMessage(sender, "cdkey-help-redeem");
         if (sender.hasPermission("win9xshopandpay.cdkey.create")) {
-            sender.sendMessage(ChatColor.GRAY + "/cdkey create <物品类型> <数量> [最大使用次数] - 创建CDKey");
+            sendMessage(sender, "cdkey-help-create");
         }
         if (sender.hasPermission("win9xshopandpay.cdkey.delete")) {
-            sender.sendMessage(ChatColor.GRAY + "/cdkey delete <key> - 删除CDKey");
+            sendMessage(sender, "cdkey-help-delete");
         }
         if (sender.hasPermission("win9xshopandpay.cdkey.list")) {
-            sender.sendMessage(ChatColor.GRAY + "/cdkey list - 列出所有CDKey");
+            sendMessage(sender, "cdkey-help-list");
+        }
+    }
+
+    private String getMessage(String key, CommandSender sender) {
+        if (sender instanceof Player) {
+            return languageManager.getMessage(key, (Player) sender);
+        }
+        return languageManager.getMessage(key, "en-US");
+    }
+
+    private String getMessage(String key, CommandSender sender, Object... replacements) {
+        if (sender instanceof Player) {
+            return languageManager.getMessage(key, (Player) sender, replacements);
+        }
+        return languageManager.getMessage(key, "en-US", replacements);
+    }
+
+    private void sendMessage(CommandSender sender, String key) {
+        if (sender instanceof Player) {
+            ColorCodeConverter.sendMessage((Player) sender, languageManager.getMessageComponent(key, (Player) sender));
+        } else {
+            sender.sendMessage(ColorCodeConverter.toLegacy(languageManager.getMessageComponent(key, "en-US")));
+        }
+    }
+
+    private void sendMessage(CommandSender sender, String key, Object... replacements) {
+        if (sender instanceof Player) {
+            ColorCodeConverter.sendMessage((Player) sender, languageManager.getMessageComponent(key, (Player) sender, replacements));
+        } else {
+            sender.sendMessage(ColorCodeConverter.toLegacy(languageManager.getMessageComponent(key, "en-US", replacements)));
         }
     }
 }

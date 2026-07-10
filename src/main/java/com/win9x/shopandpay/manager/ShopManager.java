@@ -2,6 +2,7 @@ package com.win9x.shopandpay.manager;
 
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.ShopItem;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -69,11 +70,21 @@ public class ShopManager {
                 }
             }
 
-            ItemStack item = new ItemStack(org.bukkit.Material.valueOf(itemType), amount);
+            Material material;
+            try {
+                material = org.bukkit.Material.valueOf(itemType);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid material type '" + itemType + "' in shop item: " + key + ", using DIAMOND instead");
+                material = org.bukkit.Material.DIAMOND;
+            }
+            
+            ItemStack item = new ItemStack(material, amount);
             if (!name.isEmpty()) {
                 ItemMeta meta = item.getItemMeta();
-                meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&', name));
-                item.setItemMeta(meta);
+                if (meta != null) {
+                    meta.setDisplayName(name.replace("&", "§"));
+                    item.setItemMeta(meta);
+                }
             }
 
             shopItems.add(new ShopItem(item, prices, slot));

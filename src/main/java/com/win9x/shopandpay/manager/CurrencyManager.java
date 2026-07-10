@@ -14,12 +14,16 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CurrencyManager {
 
     private final Win9xShopAndPay plugin;
-    private final Map<String, Currency> currencies = new HashMap<>();
-    private final Map<String, Map<String, Double>> playerBalances = new HashMap<>();
+    private final Map<String, Currency> currencies = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Double>> playerBalances = new ConcurrentHashMap<>();
+    private final ReadWriteLock saveLock = new ReentrantReadWriteLock();
     private File balanceFile;
     private FileConfiguration balanceConfig;
     private File currencyFile;
@@ -91,19 +95,24 @@ public class CurrencyManager {
     }
 
     public void savePlayerBalances() {
-        balanceConfig.set("", null);
-        
-        for (Map.Entry<String, Map<String, Double>> entry : playerBalances.entrySet()) {
-            String playerId = entry.getKey();
-            for (Map.Entry<String, Double> balanceEntry : entry.getValue().entrySet()) {
-                balanceConfig.set(playerId + "." + balanceEntry.getKey(), balanceEntry.getValue());
-            }
-        }
-
+        saveLock.writeLock().lock();
         try {
-            balanceConfig.save(balanceFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save balances.yml");
+            balanceConfig.set("", null);
+            
+            for (Map.Entry<String, Map<String, Double>> entry : playerBalances.entrySet()) {
+                String playerId = entry.getKey();
+                for (Map.Entry<String, Double> balanceEntry : entry.getValue().entrySet()) {
+                    balanceConfig.set(playerId + "." + balanceEntry.getKey(), balanceEntry.getValue());
+                }
+            }
+
+            try {
+                balanceConfig.save(balanceFile);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to save balances.yml");
+            }
+        } finally {
+            saveLock.writeLock().unlock();
         }
     }
 
@@ -193,7 +202,28 @@ public class CurrencyManager {
         return currencies.containsKey(currencyId);
     }
 
-    public Map<String, Map<String, Double>> getPlayerBalances() {
-        return playerBalances;
+    public void setBalance(Player player, String currencyId, double amount) {
+        Currency currency = currencies.get(currencyId);
+        if (currency == null) {
+            return;
+        }
+
+        if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            Economy economy = plugin.getEconomy();
+            if (economy != null) {
+                double currentBalance = economy.getBalance(player);
+                if (currentBalance > amount) {
+                    economy.withdrawPlayer(player, currentBalance - amount);
+                } else if (currentBalance < amount) {
+                    economy.depositPlayer(player, amount - currentBalance);
+                }
+            }
+            return;
+        }
+
+        String playerId = player.getUniqueId().toString();
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new HashMap<>());
+        balances.put(currencyId, amount);
+        savePlayerBalances();
     }
 }

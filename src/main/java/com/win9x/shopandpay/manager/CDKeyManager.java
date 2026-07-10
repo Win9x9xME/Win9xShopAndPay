@@ -2,6 +2,7 @@ package com.win9x.shopandpay.manager;
 
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.CDKey;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -55,11 +56,21 @@ public class CDKeyManager {
                 usedByPlayers.addAll(usedList);
             }
 
-            ItemStack item = new ItemStack(org.bukkit.Material.valueOf(itemType), amount);
+            Material material;
+            try {
+                material = org.bukkit.Material.valueOf(itemType);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid material type '" + itemType + "' in CDKey: " + key + ", using DIAMOND instead");
+                material = org.bukkit.Material.DIAMOND;
+            }
+            
+            ItemStack item = new ItemStack(material, amount);
             if (!name.isEmpty()) {
                 ItemMeta meta = item.getItemMeta();
-                meta.setDisplayName(name);
-                item.setItemMeta(meta);
+                if (meta != null) {
+                    meta.setDisplayName(name);
+                    item.setItemMeta(meta);
+                }
             }
 
             cdKeys.put(key, new CDKey(key, item, uses, maxUses, expiryTime, usedByPlayers));

@@ -99,3 +99,8 @@ buy-currency-click-here: "[點擊這裡]"
 # AI助手相關
 ai-not-enabled: "AI助手未啟用，請聯繫管理員配置。"
 ai-no-permission: "你沒有使用AI助手的權限。"
+
+help-lottery: "&7/wsap lottery - 打開抽獎機"
+lottery-spinning: "&c抽獎正在進行中，請稍候!"
+lottery-not-enough-currency: "&c幣種不足! 需要 {0}{1}"
+lottery-failed-deduct: "&c扣除幣種失敗!"

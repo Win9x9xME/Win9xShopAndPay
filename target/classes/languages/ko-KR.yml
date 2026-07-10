@@ -99,3 +99,8 @@ buy-currency-click-here: "[여기를 클릭]"
 # AI 어시스턴트 관련
 ai-not-enabled: "AI 어시스턴트가 활성화되어 있지 않습니다. 관리자에게 문의하세요."
 ai-no-permission: "AI 어시스턴트를 사용할 권한이 없습니다."
+
+help-lottery: "&7/wsap lottery - 복권 기계 열기"
+lottery-spinning: "&c복권 진행 중입니다, 기다려주세요!"
+lottery-not-enough-currency: "&c화폐가 부족합니다! {0}{1} 필요합니다"
+lottery-failed-deduct: "&c화폐 차감에 실패했습니다!"

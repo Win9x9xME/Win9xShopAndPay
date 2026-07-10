@@ -3,12 +3,15 @@ package com.win9x.shopandpay.commands;
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.CDKey;
 import com.win9x.shopandpay.data.Currency;
+import com.win9x.shopandpay.gui.LotteryGUI;
 import com.win9x.shopandpay.gui.ShopGUI;
 import com.win9x.shopandpay.gui.ShopItemListener;
 import com.win9x.shopandpay.manager.CDKeyManager;
 import com.win9x.shopandpay.manager.CurrencyManager;
 import com.win9x.shopandpay.manager.LanguageManager;
-import org.bukkit.ChatColor;
+import com.win9x.shopandpay.util.ColorCodeConverter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,8 +19,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Win9xShopAndPayCommand implements CommandExecutor {
 
@@ -25,7 +28,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
     private final CurrencyManager currencyManager;
     private final CDKeyManager cdKeyManager;
     private final LanguageManager languageManager;
-    private final Map<String, Long> giveShopCooldowns = new HashMap<>();
+    private final Map<String, Long> giveShopCooldowns = new ConcurrentHashMap<>();
 
     public Win9xShopAndPayCommand(Win9xShopAndPay plugin) {
         this.plugin = plugin;
@@ -48,6 +51,8 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
                 return handleCDKeyCommand(sender, args);
             case "currency":
                 return handleCurrencyCommand(sender, args);
+            case "lottery":
+                return handleLotteryCommand(sender, args);
             case "reload":
                 return handleReloadCommand(sender);
             case "give_shop":
@@ -60,14 +65,14 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
     private boolean handleShopCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(getMessage("only-player", sender));
+            sendMessage(sender, "only-player");
             return true;
         }
 
         Player player = (Player) sender;
         
         if (!player.hasPermission("win9xshopandpay.shop")) {
-            player.sendMessage(getMessage("no-permission", player));
+            sendMessage(player, "no-permission");
             return true;
         }
 
@@ -78,11 +83,11 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
         Currency currency = currencyManager.getCurrency(currencyId);
         if (currency == null) {
-            player.sendMessage(getMessage("currency-invalid", player));
+            sendMessage(player, "currency-invalid");
             return true;
         }
 
-        player.sendMessage(getMessage("text-shop-title", player));
+        sendMessage(player, "text-shop-title");
         
         for (com.win9x.shopandpay.data.ShopItem shopItem : plugin.getShopManager().getShopItems()) {
             double price = shopItem.getPrice(currencyId);
@@ -99,9 +104,8 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
                     shopItem.getItem().getItemMeta().getDisplayName() :
                     shopItem.getItem().getType().name();
             
-            player.sendMessage(getMessage("text-shop-item", player, 
-                    itemName, shopItem.getItem().getAmount(), 
-                    currency.getName(), priceStr));
+            sendMessage(player, "text-shop-item", itemName, shopItem.getItem().getAmount(), 
+                    currency.getName(), priceStr);
         }
         
         return true;
@@ -130,12 +134,12 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
     private boolean redeemCDKey(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(getMessage("only-player", sender));
+            sendMessage(sender, "only-player");
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(getMessage("error-usage-redeem-cdkey", sender));
+            sendMessage(sender, "error-usage-redeem-cdkey");
             return true;
         }
 
@@ -144,30 +148,30 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
         CDKeyManager.RedeemResult result = cdKeyManager.redeemCDKey(key, player);
         if (result == CDKeyManager.RedeemResult.NOT_FOUND) {
-            player.sendMessage(getMessage("cdkey-not-found", player));
+            sendMessage(player, "cdkey-not-found");
             return true;
         } else if (result == CDKeyManager.RedeemResult.EXPIRED) {
-            player.sendMessage(getMessage("cdkey-invalid-or-expired", player));
+            sendMessage(player, "cdkey-invalid-or-expired");
             return true;
         } else if (result == CDKeyManager.RedeemResult.ALREADY_USED) {
-            player.sendMessage(getMessage("cdkey-already-used", player));
+            sendMessage(player, "cdkey-already-used");
             return true;
         }
 
-        player.sendMessage(getMessage("cdkey-redeem-success", player));
+        sendMessage(player, "cdkey-redeem-success");
         return true;
     }
 
     private boolean createCDKey(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.create")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
         if (args.length < 4) {
-            sender.sendMessage(getMessage("error-usage-create-cdkey", sender));
-            sender.sendMessage(getMessage("error-material-example", sender));
-            sender.sendMessage(getMessage("error-expiry-format", sender));
+            sendMessage(sender, "error-usage-create-cdkey");
+            sendMessage(sender, "error-material-example");
+            sendMessage(sender, "error-expiry-format");
             return true;
         }
 
@@ -175,7 +179,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         try {
             material = Material.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(getMessage("error-invalid-material", sender));
+            sendMessage(sender, "error-invalid-material");
             return true;
         }
 
@@ -183,7 +187,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         try {
             amount = Integer.parseInt(args[3]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(getMessage("error-invalid-number", sender));
+            sendMessage(sender, "error-invalid-number");
             return true;
         }
 
@@ -192,7 +196,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             try {
                 maxUses = Integer.parseInt(args[4]);
             } catch (NumberFormatException e) {
-                sender.sendMessage(getMessage("error-invalid-max-uses", sender));
+                sendMessage(sender, "error-invalid-max-uses");
                 return true;
             }
         }
@@ -201,8 +205,8 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         if (args.length >= 6) {
             expiryTime = parseExpiryTime(args[5]);
             if (expiryTime < 0) {
-                sender.sendMessage(getMessage("error-invalid-expiry", sender));
-                sender.sendMessage(getMessage("error-expiry-format", sender));
+                sendMessage(sender, "error-invalid-expiry");
+                sendMessage(sender, "error-expiry-format");
                 return true;
             }
         }
@@ -210,13 +214,13 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         ItemStack item = new ItemStack(material, amount);
         String key = cdKeyManager.generateCDKey(item, maxUses, expiryTime);
 
-        sender.sendMessage(getMessage("cdkey-create-success", sender, key));
-        sender.sendMessage(getMessage("cdkey-create-item", sender, material.name(), amount));
-        sender.sendMessage(getMessage("cdkey-create-max-uses", sender, maxUses));
+        sendMessage(sender, "cdkey-create-success", key);
+        sendMessage(sender, "cdkey-create-item", material.name(), amount);
+        sendMessage(sender, "cdkey-create-max-uses", maxUses);
         if (expiryTime > 0) {
-            sender.sendMessage(getMessage("cdkey-create-expiry", sender, formatExpiryTime(expiryTime)));
+            sendMessage(sender, "cdkey-create-expiry", formatExpiryTime(expiryTime));
         } else {
-            sender.sendMessage(getMessage("cdkey-create-permanent", sender));
+            sendMessage(sender, "cdkey-create-permanent");
         }
         return true;
     }
@@ -271,33 +275,33 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
     private boolean deleteCDKey(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.delete")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(getMessage("error-usage-delete-cdkey", sender));
+            sendMessage(sender, "error-usage-delete-cdkey");
             return true;
         }
 
         String key = args[2].toUpperCase();
         
         if (!cdKeyManager.deleteCDKey(key)) {
-            sender.sendMessage(getMessage("cdkey-not-found", sender));
+            sendMessage(sender, "cdkey-not-found");
             return true;
         }
 
-        sender.sendMessage(getMessage("cdkey-delete-success", sender));
+        sendMessage(sender, "cdkey-delete-success");
         return true;
     }
 
     private boolean listCDKeys(CommandSender sender) {
         if (!sender.hasPermission("win9xshopandpay.cdkey.list")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
-        sender.sendMessage(getMessage("cdkey-list-title", sender));
+        sendMessage(sender, "cdkey-list-title");
         
         for (CDKey cdKey : cdKeyManager.getAllCDKeys()) {
             String expiryInfo;
@@ -307,9 +311,9 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
                 expiryInfo = getMessage("cdkey-expiry-permanent", sender);
             }
             
-            sender.sendMessage(getMessage("cdkey-list-entry", sender, 
+            sendMessage(sender, "cdkey-list-entry", 
                     cdKey.getKey(), cdKey.getItem().getType().name(), 
-                    cdKey.getItem().getAmount(), cdKey.getUses(), cdKey.getMaxUses(), expiryInfo));
+                    cdKey.getItem().getAmount(), cdKey.getUses(), cdKey.getMaxUses(), expiryInfo);
         }
 
         return true;
@@ -338,14 +342,14 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
     private boolean checkBalance(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(getMessage("only-player", sender));
+            sendMessage(sender, "only-player");
             return true;
         }
 
         Player player = (Player) sender;
         
         if (!player.hasPermission("win9xshopandpay.currency.balance")) {
-            player.sendMessage(getMessage("no-permission", player));
+            sendMessage(player, "no-permission");
             return true;
         }
         
@@ -353,18 +357,20 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             String currencyId = args[2].toLowerCase();
             Currency currency = currencyManager.getCurrency(currencyId);
             if (currency == null) {
-                sender.sendMessage(getMessage("currency-invalid", sender));
+                sendMessage(player, "currency-invalid");
                 return true;
             }
             double balance = currencyManager.getBalance(player, currencyId);
-            sender.sendMessage(getMessage("currency-balance-entry", sender, 
-                    currency.getSymbol(), currency.getName(), ChatColor.YELLOW, balance));
+            Component balanceMsg = Component.text(currency.getSymbol() + currency.getName() + ": ", NamedTextColor.YELLOW)
+                    .append(Component.text(String.valueOf(balance), NamedTextColor.WHITE));
+            ColorCodeConverter.sendMessage(player, balanceMsg);
         } else {
-            sender.sendMessage(getMessage("currency-balance-title", sender));
+            sendMessage(player, "currency-balance-title");
             for (Currency currency : currencyManager.getAllCurrencies().values()) {
                 double balance = currencyManager.getBalance(player, currency.getId());
-                sender.sendMessage(getMessage("currency-balance-entry", sender, 
-                        currency.getSymbol(), currency.getName(), ChatColor.YELLOW, balance));
+                Component balanceMsg = Component.text(currency.getSymbol() + currency.getName() + ": ", NamedTextColor.YELLOW)
+                        .append(Component.text(String.valueOf(balance), NamedTextColor.WHITE));
+                ColorCodeConverter.sendMessage(player, balanceMsg);
             }
         }
         return true;
@@ -372,24 +378,24 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
     private boolean giveCurrency(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.currency.give")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
-        if (args.length < 4) {
-            sender.sendMessage(getMessage("error-usage-give-currency", sender));
+        if (args.length < 5) {
+            sendMessage(sender, "error-usage-give-currency");
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[2]);
         if (target == null) {
-            sender.sendMessage(getMessage("player-not-online", sender));
+            sendMessage(sender, "player-not-online");
             return true;
         }
 
         String currencyId = args[3].toLowerCase();
         if (!currencyManager.isValidCurrency(currencyId)) {
-            sender.sendMessage(getMessage("currency-invalid", sender));
+            sendMessage(sender, "currency-invalid");
             return true;
         }
 
@@ -397,39 +403,39 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         try {
             amount = Double.parseDouble(args[4]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(getMessage("error-invalid-number", sender));
+            sendMessage(sender, "error-invalid-number");
             return true;
         }
 
         currencyManager.deposit(target, currencyId, amount);
         Currency currency = currencyManager.getCurrency(currencyId);
-        sender.sendMessage(getMessage("currency-give-success", sender, 
-                target.getName(), currency.getSymbol(), amount, currency.getName()));
-        target.sendMessage(getMessage("currency-give-receive", target, 
-                currency.getSymbol(), amount, currency.getName()));
+        sendMessage(sender, "currency-give-success", 
+                target.getName(), currency.getSymbol(), amount, currency.getName());
+        sendMessage(target, "currency-give-receive", 
+                currency.getSymbol(), amount, currency.getName());
         return true;
     }
 
     private boolean setCurrency(CommandSender sender, String[] args) {
         if (!sender.hasPermission("win9xshopandpay.currency.set")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
-        if (args.length < 4) {
-            sender.sendMessage(getMessage("error-usage-set-currency", sender));
+        if (args.length < 5) {
+            sendMessage(sender, "error-usage-set-currency");
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[2]);
         if (target == null) {
-            sender.sendMessage(getMessage("player-not-online", sender));
+            sendMessage(sender, "player-not-online");
             return true;
         }
 
         String currencyId = args[3].toLowerCase();
         if (!currencyManager.isValidCurrency(currencyId)) {
-            sender.sendMessage(getMessage("currency-invalid", sender));
+            sendMessage(sender, "currency-invalid");
             return true;
         }
 
@@ -437,59 +443,67 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         try {
             amount = Double.parseDouble(args[4]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(getMessage("error-invalid-number", sender));
+            sendMessage(sender, "error-invalid-number");
             return true;
         }
 
-        String playerId = target.getUniqueId().toString();
-        currencyManager.getPlayerBalances().computeIfAbsent(playerId, k -> new java.util.HashMap<>()).put(currencyId, amount);
-        currencyManager.savePlayerBalances();
+        currencyManager.setBalance(target, currencyId, amount);
         
         Currency currency = currencyManager.getCurrency(currencyId);
-        sender.sendMessage(getMessage("currency-set-success", sender, 
-                target.getName(), currency.getSymbol(), currency.getName(), amount));
-        target.sendMessage(getMessage("currency-set-receive", target, 
-                currency.getSymbol(), currency.getName(), amount));
+        sendMessage(sender, "currency-set-success", 
+                target.getName(), currency.getSymbol(), currency.getName(), amount);
+        sendMessage(target, "currency-set-receive", 
+                currency.getSymbol(), currency.getName(), amount);
         return true;
     }
 
     private boolean listCurrencies(CommandSender sender) {
-        if (!sender.hasPermission("win9xshopandpay.currency.list")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+        if (!(sender instanceof Player)) {
+            sendMessage(sender, "only-player");
+            return true;
+        }
+
+        Player player = (Player) sender;
+
+        if (!player.hasPermission("win9xshopandpay.currency.list")) {
+            sendMessage(player, "no-permission");
             return true;
         }
         
-        sender.sendMessage(getMessage("currency-list-title", sender));
+        sendMessage(player, "currency-list-title");
         for (Currency currency : currencyManager.getAllCurrencies().values()) {
-            String defaultTag = currency.isDefault() ? getMessage("currency-default-tag", sender) : "";
-            sender.sendMessage(getMessage("currency-list-entry", sender, 
-                    currency.getSymbol(), ChatColor.YELLOW, currency.getId(), currency.getName()) + defaultTag);
+            String defaultTag = currency.isDefault() ? getMessage("currency-default-tag", player) : "";
+            Component entryMsg = Component.text(currency.getSymbol())
+                    .append(Component.text(currency.getId(), NamedTextColor.YELLOW))
+                    .append(Component.text(" - " + currency.getName() + defaultTag));
+            ColorCodeConverter.sendMessage(player, entryMsg);
         }
         return true;
     }
 
     private boolean handleReloadCommand(CommandSender sender) {
         if (!sender.hasPermission("win9xshopandpay.reload")) {
-            sender.sendMessage(getMessage("no-permission", sender));
+            sendMessage(sender, "no-permission");
             return true;
         }
 
         plugin.reloadConfig();
         plugin.reloadAIConfig();
-        sender.sendMessage(getMessage("reload-success", sender));
+        languageManager.reloadLanguages();
+        sendMessage(sender, "reload-success");
         return true;
     }
 
     private boolean handleGiveShopCommand(CommandSender sender) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(getMessage("only-player", sender));
+            sendMessage(sender, "only-player");
             return true;
         }
 
         Player player = (Player) sender;
         
         if (!player.hasPermission("win9xshopandpay.give_shop")) {
-            player.sendMessage(getMessage("no-permission", player));
+            sendMessage(player, "no-permission");
             return true;
         }
 
@@ -501,7 +515,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             
             if (lastUsed != null && now - lastUsed < cooldownSeconds * 1000L) {
                 long remaining = (cooldownSeconds * 1000L - (now - lastUsed)) / 1000L;
-                player.sendMessage(getMessage("give-shop-cooldown", player, remaining));
+                sendMessage(player, "give-shop-cooldown", remaining);
                 return true;
             }
             
@@ -510,46 +524,65 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
 
         ItemStack compass = ShopItemListener.createShopCompass(plugin, player);
         player.getInventory().addItem(compass);
-        player.sendMessage(getMessage("give-shop-success", player));
+        sendMessage(player, "give-shop-success");
+        return true;
+    }
+
+    private boolean handleLotteryCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player)) {
+            sendMessage(sender, "only-player");
+            return true;
+        }
+
+        Player player = (Player) sender;
+        
+        if (!player.hasPermission("win9xshopandpay.lottery")) {
+            sendMessage(player, "no-permission");
+            return true;
+        }
+
+        LotteryGUI lotteryGUI = plugin.getLotteryGUI();
+        lotteryGUI.openLottery(player);
         return true;
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(getMessage("help-title", sender));
-        sender.sendMessage(getMessage("help-shop", sender));
-        sender.sendMessage(getMessage("help-cdkey", sender));
-        sender.sendMessage(getMessage("help-currency", sender));
+        sendMessage(sender, "help-title");
+        sendMessage(sender, "help-shop");
+        sendMessage(sender, "help-cdkey");
+        sendMessage(sender, "help-currency");
+        sendMessage(sender, "help-lottery");
         if (sender.hasPermission("win9xshopandpay.give_shop")) {
-            sender.sendMessage(getMessage("help-give-shop", sender));
+            sendMessage(sender, "help-give-shop");
         }
         if (sender.hasPermission("win9xshopandpay.reload")) {
-            sender.sendMessage(getMessage("help-reload", sender));
+            sendMessage(sender, "help-reload");
         }
     }
 
     private void sendCDKeyHelp(CommandSender sender) {
-        sender.sendMessage(getMessage("cdkey-help-title", sender));
-        sender.sendMessage(getMessage("cdkey-help-redeem", sender));
+        sendMessage(sender, "cdkey-help-title");
+        sendMessage(sender, "cdkey-help-redeem");
         if (sender.hasPermission("win9xshopandpay.cdkey.create")) {
-            sender.sendMessage(getMessage("cdkey-help-create", sender));
+            sendMessage(sender, "cdkey-help-create");
         }
         if (sender.hasPermission("win9xshopandpay.cdkey.delete")) {
-            sender.sendMessage(getMessage("cdkey-help-delete", sender));
+            sendMessage(sender, "cdkey-help-delete");
         }
         if (sender.hasPermission("win9xshopandpay.cdkey.list")) {
-            sender.sendMessage(getMessage("cdkey-help-list", sender));
+            sendMessage(sender, "cdkey-help-list");
         }
     }
 
     private void sendCurrencyHelp(CommandSender sender) {
-        sender.sendMessage(getMessage("currency-help-title", sender));
-        sender.sendMessage(getMessage("currency-help-balance", sender));
-        sender.sendMessage(getMessage("currency-help-list", sender));
+        sendMessage(sender, "currency-help-title");
+        sendMessage(sender, "currency-help-balance");
+        sendMessage(sender, "currency-help-list");
         if (sender.hasPermission("win9xshopandpay.currency.give")) {
-            sender.sendMessage(getMessage("currency-help-give", sender));
+            sendMessage(sender, "currency-help-give");
         }
         if (sender.hasPermission("win9xshopandpay.currency.set")) {
-            sender.sendMessage(getMessage("currency-help-set", sender));
+            sendMessage(sender, "currency-help-set");
         }
     }
 
@@ -565,5 +598,21 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             return languageManager.getMessage(key, (Player) sender, replacements);
         }
         return languageManager.getMessage(key, "en-US", replacements);
+    }
+
+    private void sendMessage(CommandSender sender, String key) {
+        if (sender instanceof Player) {
+            ColorCodeConverter.sendMessage((Player) sender, languageManager.getMessageComponent(key, (Player) sender));
+        } else {
+            sender.sendMessage(ColorCodeConverter.toLegacy(languageManager.getMessageComponent(key, "en-US")));
+        }
+    }
+
+    private void sendMessage(CommandSender sender, String key, Object... replacements) {
+        if (sender instanceof Player) {
+            ColorCodeConverter.sendMessage((Player) sender, languageManager.getMessageComponent(key, (Player) sender, replacements));
+        } else {
+            sender.sendMessage(ColorCodeConverter.toLegacy(languageManager.getMessageComponent(key, "en-US", replacements)));
+        }
     }
 }

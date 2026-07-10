@@ -1,0 +1,53 @@
+lottery:
+  cost:
+    currency-id: "coins"
+    amount: 100.0
+  prizes:
+    common_1:
+      type: "DIAMOND"
+      amount: 1
+      weight: 30.0
+      display-name: "&f钻石"
+      rarity: "common"
+    common_2:
+      type: "GOLD_INGOT"
+      amount: 5
+      weight: 25.0
+      display-name: "&6金锭 x5"
+      rarity: "common"
+    uncommon_1:
+      type: "EMERALD"
+      amount: 3
+      weight: 15.0
+      display-name: "&a绿宝石 x3"
+      rarity: "uncommon"
+    uncommon_2:
+      type: "NETHERITE_INGOT"
+      amount: 1
+      weight: 10.0
+      display-name: "&7下界合金锭"
+      rarity: "uncommon"
+    rare_1:
+      type: "DIAMOND_SWORD"
+      amount: 1
+      weight: 8.0
+      display-name: "&b钻石剑"
+      rarity: "rare"
+    rare_2:
+      type: "ENCHANTED_GOLDEN_APPLE"
+      amount: 2
+      weight: 7.0
+      display-name: "&6附魔金苹果 x2"
+      rarity: "rare"
+    epic_1:
+      type: "DRAGON_EGG"
+      amount: 1
+      weight: 3.0
+      display-name: "&5龙蛋"
+      rarity: "epic"
+    legendary_1:
+      type: "NETHER_STAR"
+      amount: 1
+      weight: 2.0
+      display-name: "&d下界之星"
+      rarity: "legendary"

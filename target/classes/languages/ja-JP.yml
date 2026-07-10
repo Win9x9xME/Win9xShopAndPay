@@ -99,3 +99,8 @@ buy-currency-click-here: "[ここをクリック]"
 # AIアシスタント関連
 ai-not-enabled: "AIアシスタントが有効になっていません。管理者に連絡してください。"
 ai-no-permission: "AIアシスタントを使用する権限がありません。"
+
+help-lottery: "&7/wsap lottery - 抽選機を開く"
+lottery-spinning: "&c抽選中です、お待ちください!"
+lottery-not-enough-currency: "&c通貨が不足しています! {0}{1} 必要です"
+lottery-failed-deduct: "&c通貨の引き落としに失敗しました!"

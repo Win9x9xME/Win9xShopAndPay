@@ -1,6 +1,8 @@
 package com.win9x.shopandpay.manager;
 
 import com.win9x.shopandpay.Win9xShopAndPay;
+import com.win9x.shopandpay.util.ColorCodeConverter;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -66,6 +68,13 @@ public class LanguageManager {
         }
     }
 
+    public void reloadLanguages() {
+        languages.clear();
+        loadDefaultLanguage();
+        loadLanguages();
+        plugin.getLogger().info("Languages reloaded successfully");
+    }
+
     public String getMessage(String key, String language) {
         FileConfiguration langConfig = languages.get(language);
         if (langConfig == null) {
@@ -92,6 +101,26 @@ public class LanguageManager {
             message = message.replace("{" + i + "}", String.valueOf(replacements[i]));
         }
         return message;
+    }
+
+    public Component getMessageComponent(String key, Player player) {
+        String message = getMessage(key, player);
+        return ColorCodeConverter.convert(message);
+    }
+
+    public Component getMessageComponent(String key, Player player, Object... replacements) {
+        String message = getMessage(key, player, replacements);
+        return ColorCodeConverter.convert(message);
+    }
+
+    public Component getMessageComponent(String key, String language) {
+        String message = getMessage(key, language);
+        return ColorCodeConverter.convert(message);
+    }
+
+    public Component getMessageComponent(String key, String language, Object... replacements) {
+        String message = getMessage(key, language, replacements);
+        return ColorCodeConverter.convert(message);
     }
 
     public String getMessage(String key, String language, Object... replacements) {

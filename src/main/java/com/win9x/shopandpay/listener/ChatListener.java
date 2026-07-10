@@ -3,6 +3,7 @@ package com.win9x.shopandpay.listener;
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.manager.AIAssistantManager;
 import com.win9x.shopandpay.manager.LanguageManager;
+import com.win9x.shopandpay.util.ColorCodeConverter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,14 +39,14 @@ public class ChatListener implements Listener {
             }
 
             if (!aiAssistantManager.isEnabled()) {
-                player.sendMessage(languageManager.getMessage("ai-not-enabled", player));
-                return;
-            }
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("ai-not-enabled", player));
+            return;
+        }
 
-            if (!player.hasPermission("win9xshopandpay.ai.use")) {
-                player.sendMessage(languageManager.getMessage("ai-no-permission", player));
-                return;
-            }
+        if (!player.hasPermission("win9xshopandpay.ai.use")) {
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("ai-no-permission", player));
+            return;
+        }
 
             event.setCancelled(true);
             aiAssistantManager.processMessage(player, query);
