@@ -159,4 +159,9 @@ public class CDKeyManager {
     public Collection<CDKey> getAllCDKeys() {
         return cdKeys.values();
     }
+
+    public void reload() {
+        cdKeys.clear();
+        loadCDKeys();
+    }
 }

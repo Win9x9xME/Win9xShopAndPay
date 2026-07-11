@@ -91,11 +91,20 @@ give-shop-success: "&a獲得商店指南針!"
 give-shop-cooldown: "&c請等待 {0} 秒後再使用!"
 help-give-shop: "&7/wsap give_shop - 獲取商店指南針"
 
-# GUI購買幣種按鈕
+# GUI购买币种按钮
 buy-currency-button: "購買其他幣種"
 buy-currency-hint: "點擊購買更多幣種"
 buy-currency-message: "&a請點擊下方鏈接購買幣種:"
 buy-currency-click-here: "[點擊這裡]"
+
+# GUI抽奖机按钮
+lottery-button: "§6抽獎機"
+lottery-hint: "點擊打開抽獎機"
+
+# GUI CDKey兑换按钮
+cdkey-button: "§b兌換CDKey"
+cdkey-hint: "點擊輸入兌換碼"
+cdkey-enter-prompt: "&a請在聊天框中輸入: /wsap cdkey redeem <兌換碼>"
 
 # AI助手相關
 ai-not-enabled: "AI助手未啟用，請聯繫管理員配置。"

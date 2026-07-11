@@ -72,17 +72,24 @@ ai-assistant:
   # 豆包示例: https://api.doubao.com/v1/chat/completions
   # Qwen示例: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
   # Minimax示例: https://api.minimax.chat/v1/text/chatcompletion
-  # 讯飞星火示例: https://spark-api.xf-yun.com/v3.1/chat
+  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v1.1/chat（Lite版）
+  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v3.1/chat（Pro版）
+  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v3.5/chat（Max版）
   # Anthropic示例: https://api.anthropic.com/v1/messages
   # Kimi示例: https://api.moonshot.cn/v1/chat/completions
   # 混元示例: https://hunyuan.tencentcloudapi.com/v1/chat/completions
   api-endpoint: ""
-  # API密钥
+  # API密钥（OpenAI格式使用）
   api-key: ""
+  # API密钥（星火API使用，api-key和api-secret配合使用）
+  # 在讯飞开放平台控制台获取：https://console.xfyun.cn/services/bmx1
+  api-secret: ""
+  # 应用ID（星火API使用）
+  app-id: ""
   # AI模型名称
   # OpenAI/DeepSeek/GLM/豆包/Qwen: gpt-3.5-turbo, deepseek-chat, glm-4, doubao-3, qwen-turbo
   # Minimax: abab5-chat
-  # 讯飞星火: spark-3.5（注意：星火官方API需要HMAC签名，建议使用其OpenAI兼容端点或custom格式）
+  # 讯飞星火: lite（Lite版）, generalv3（Pro版）, generalv3.5（Max版）
   # Anthropic: claude-3-sonnet-20240229
   # Kimi: moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k
   # 混元: hunyuan-standard
@@ -103,6 +110,12 @@ ai-assistant:
   # minimax: Minimax格式（使用prompt和role字段）
   # custom: 自定义格式（需配置下方的request-template和response-path）
   api-format: "openai"
+  # 连接类型
+  # 可选值: http, websocket
+  # http: 使用HTTP POST请求调用API（大多数API使用此方式）
+  # websocket: 使用WebSocket连接调用API（适用于讯飞星火等支持WebSocket的API）
+  # 注意：当api-format为spark且connection-type为websocket时，将使用WebSocket方式连接讯飞星火API
+  connection-type: "http"
   # 自定义请求头（可选）
   # 例如讯飞星火需要:
   # custom-headers:

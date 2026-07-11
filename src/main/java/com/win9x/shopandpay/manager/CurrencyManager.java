@@ -288,6 +288,11 @@ public class CurrencyManager {
         savePlayerBalances();
     }
 
+    public void reload() {
+        currencies.clear();
+        loadCurrencies();
+    }
+
     public double getBalance(OfflinePlayer offlinePlayer, String currencyId) {
         Currency currency = currencies.get(currencyId);
         if (currency == null) {

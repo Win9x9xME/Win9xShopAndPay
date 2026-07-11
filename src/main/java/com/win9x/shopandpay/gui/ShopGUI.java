@@ -42,6 +42,8 @@ public class ShopGUI implements Listener {
     private final NamespacedKey currencyPageKey;
     private final NamespacedKey itemPageKey;
     private final NamespacedKey searchKey;
+    private final NamespacedKey lotteryKey;
+    private final NamespacedKey cdkeyKey;
     
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
     
@@ -64,6 +66,8 @@ public class ShopGUI implements Listener {
         this.currencyPageKey = new NamespacedKey(plugin, "currency_page");
         this.itemPageKey = new NamespacedKey(plugin, "item_page");
         this.searchKey = new NamespacedKey(plugin, "search_term");
+        this.lotteryKey = new NamespacedKey(plugin, "lottery");
+        this.cdkeyKey = new NamespacedKey(plugin, "cdkey");
     }
 
     public void openShop(Player player) {
@@ -269,6 +273,32 @@ public class ShopGUI implements Listener {
         }
         inventory.setItem(46, searchBox);
 
+        ItemStack cdkey = new ItemStack(Material.TRIPWIRE_HOOK);
+        ItemMeta cdkeyMeta = cdkey.getItemMeta();
+        if (cdkeyMeta != null) {
+            cdkeyMeta.setDisplayName(languageManager.getMessage("cdkey-button", player).replace("&", "§"));
+            List<String> lore = new ArrayList<>();
+            lore.add(languageManager.getMessage("cdkey-hint", player).replace("&", "§"));
+            cdkeyMeta.setLore(lore);
+            PersistentDataContainer cdkeyContainer = cdkeyMeta.getPersistentDataContainer();
+            cdkeyContainer.set(cdkeyKey, PersistentDataType.BOOLEAN, true);
+            cdkey.setItemMeta(cdkeyMeta);
+        }
+        inventory.setItem(50, cdkey);
+
+        ItemStack lottery = new ItemStack(Material.HOPPER);
+        ItemMeta lotteryMeta = lottery.getItemMeta();
+        if (lotteryMeta != null) {
+            lotteryMeta.setDisplayName(languageManager.getMessage("lottery-button", player).replace("&", "§"));
+            List<String> lore = new ArrayList<>();
+            lore.add(languageManager.getMessage("lottery-hint", player).replace("&", "§"));
+            lotteryMeta.setLore(lore);
+            PersistentDataContainer lotteryContainer = lotteryMeta.getPersistentDataContainer();
+            lotteryContainer.set(lotteryKey, PersistentDataType.BOOLEAN, true);
+            lottery.setItemMeta(lotteryMeta);
+        }
+        inventory.setItem(51, lottery);
+
         ItemStack buyCurrency = new ItemStack(Material.EMERALD);
         ItemMeta buyMeta = buyCurrency.getItemMeta();
         if (buyMeta != null) {
@@ -289,7 +319,7 @@ public class ShopGUI implements Listener {
         nextPage.setItemMeta(nextPage.getItemMeta());
         inventory.setItem(53, nextPage);
 
-        for (int i = 47; i <= 51; i++) {
+        for (int i = 47; i <= 49; i++) {
             ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
             ItemMeta meta = filler.getItemMeta();
             meta.setDisplayName("");
@@ -313,6 +343,11 @@ public class ShopGUI implements Listener {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
         Player player = (Player) event.getWhoClicked();
+        
+        if (event.getClickedInventory() == null || event.getClickedInventory().equals(player.getInventory())) {
+            return;
+        }
+        
         int slot = event.getSlot();
         
         if (slot < 0 || slot >= INVENTORY_SIZE) return;
@@ -358,6 +393,16 @@ public class ShopGUI implements Listener {
 
         if (slot == 46) {
             handleSearchClick(player, currentCurrencyId, currentItemPage);
+            return;
+        }
+
+        if (slot == 50) {
+            handleCdkeyButtonClick(player);
+            return;
+        }
+
+        if (slot == 51) {
+            handleLotteryButtonClick(player);
             return;
         }
 
@@ -491,6 +536,16 @@ public class ShopGUI implements Listener {
         Component message = Component.text(languageManager.getMessage("buy-currency-click-here", player), NamedTextColor.AQUA)
                 .clickEvent(ClickEvent.openUrl(url));
         ColorCodeConverter.sendMessage(player, message);
+    }
+
+    private void handleLotteryButtonClick(Player player) {
+        player.closeInventory();
+        plugin.getLotteryGUI().openLottery(player);
+    }
+
+    private void handleCdkeyButtonClick(Player player) {
+        player.closeInventory();
+        ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-enter-prompt", player));
     }
     
     private String getServerAddress() {

@@ -91,11 +91,20 @@ give-shop-success: "&a상점 컴퍼스를 획득했습니다!"
 give-shop-cooldown: "&c{0}초 후에 다시 사용하세요!"
 help-give-shop: "&7/wsap give_shop - 상점 컴퍼스 가져오기"
 
-# GUI 화폐 구매 버튼
+# GUI购买币种按钮
 buy-currency-button: "다른 화폐 구매"
 buy-currency-hint: "클릭하여 화폐 구매"
 buy-currency-message: "&a아래 링크를 클릭하여 화폐를 구매하세요:"
 buy-currency-click-here: "[여기를 클릭]"
+
+# GUI抽奖机按钮
+lottery-button: "§6복권 기계"
+lottery-hint: "클릭하여 복권 기계 열기"
+
+# GUI CDKey兑换按钮
+cdkey-button: "§bCDKey 교환"
+cdkey-hint: "클릭하여 코드 입력"
+cdkey-enter-prompt: "&a채팅에 입력하세요: /wsap cdkey redeem <코드>"
 
 # AI 어시스턴트 관련
 ai-not-enabled: "AI 어시스턴트가 활성화되어 있지 않습니다. 관리자에게 문의하세요."

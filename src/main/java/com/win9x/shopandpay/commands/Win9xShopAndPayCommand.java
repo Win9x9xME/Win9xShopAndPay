@@ -16,15 +16,19 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-public class Win9xShopAndPayCommand implements CommandExecutor {
+public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
 
     private final Win9xShopAndPay plugin;
     private final CurrencyManager currencyManager;
@@ -498,6 +502,10 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         plugin.reloadConfig();
         plugin.reloadAIConfig();
         languageManager.reloadLanguages();
+        currencyManager.reload();
+        plugin.getShopManager().reload();
+        cdKeyManager.reload();
+        plugin.getLotteryManager().reload();
         sendMessage(sender, "reload-success");
         return true;
     }
@@ -635,5 +643,141 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> suggestions = new ArrayList<>();
+        
+        if (args.length == 1) {
+            suggestions.add("shop");
+            suggestions.add("cdkey");
+            suggestions.add("currency");
+            suggestions.add("lottery");
+            if (sender.hasPermission("win9xshopandpay.give_shop")) {
+                suggestions.add("give_shop");
+            }
+            if (sender.hasPermission("win9xshopandpay.reload")) {
+                suggestions.add("reload");
+            }
+        } else if (args.length == 2) {
+            switch (args[0].toLowerCase()) {
+                case "shop":
+                    for (Currency currency : currencyManager.getAllCurrencies().values()) {
+                        suggestions.add(currency.getId());
+                    }
+                    break;
+                case "cdkey":
+                    if (sender.hasPermission("win9xshopandpay.cdkey.redeem")) {
+                        suggestions.add("redeem");
+                    }
+                    if (sender.hasPermission("win9xshopandpay.cdkey.create")) {
+                        suggestions.add("create");
+                    }
+                    if (sender.hasPermission("win9xshopandpay.cdkey.delete")) {
+                        suggestions.add("delete");
+                    }
+                    if (sender.hasPermission("win9xshopandpay.cdkey.list")) {
+                        suggestions.add("list");
+                    }
+                    break;
+                case "currency":
+                    suggestions.add("balance");
+                    suggestions.add("list");
+                    if (sender.hasPermission("win9xshopandpay.currency.give")) {
+                        suggestions.add("give");
+                    }
+                    if (sender.hasPermission("win9xshopandpay.currency.set")) {
+                        suggestions.add("set");
+                    }
+                    break;
+            }
+        } else if (args.length == 3) {
+            switch (args[0].toLowerCase()) {
+                case "cdkey":
+                    switch (args[1].toLowerCase()) {
+                        case "create":
+                            for (Material material : Material.values()) {
+                                if (material.isItem()) {
+                                    suggestions.add(material.name());
+                                }
+                            }
+                            break;
+                        case "redeem":
+                        case "delete":
+                            for (CDKey cdKey : cdKeyManager.getAllCDKeys()) {
+                                suggestions.add(cdKey.getKey());
+                            }
+                            break;
+                    }
+                    break;
+                case "currency":
+                    switch (args[1].toLowerCase()) {
+                        case "give":
+                        case "set":
+                            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                                suggestions.add(player.getName());
+                            }
+                            break;
+                        case "balance":
+                            for (Currency currency : currencyManager.getAllCurrencies().values()) {
+                                suggestions.add(currency.getId());
+                            }
+                            break;
+                    }
+                    break;
+            }
+        } else if (args.length == 4) {
+            switch (args[0].toLowerCase()) {
+                case "currency":
+                    switch (args[1].toLowerCase()) {
+                        case "give":
+                        case "set":
+                            for (Currency currency : currencyManager.getAllCurrencies().values()) {
+                                suggestions.add(currency.getId());
+                            }
+                            break;
+                    }
+                    break;
+                case "cdkey":
+                    switch (args[1].toLowerCase()) {
+                        case "create":
+                            suggestions.add("1");
+                            suggestions.add("64");
+                            break;
+                    }
+                    break;
+            }
+        } else if (args.length == 5) {
+            switch (args[0].toLowerCase()) {
+                case "cdkey":
+                    switch (args[1].toLowerCase()) {
+                        case "create":
+                            suggestions.add("1");
+                            suggestions.add("10");
+                            suggestions.add("100");
+                            break;
+                    }
+                    break;
+            }
+        } else if (args.length == 6) {
+            switch (args[0].toLowerCase()) {
+                case "cdkey":
+                    switch (args[1].toLowerCase()) {
+                        case "create":
+                            suggestions.add("1d");
+                            suggestions.add("1h");
+                            suggestions.add("30m");
+                            suggestions.add("1w");
+                            break;
+                    }
+                    break;
+            }
+        }
+        
+        String lastArg = args[args.length - 1].toLowerCase();
+        return suggestions.stream()
+                .filter(s -> s.toLowerCase().startsWith(lastArg))
+                .collect(Collectors.toList());
     }
 }

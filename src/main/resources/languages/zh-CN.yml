@@ -97,6 +97,15 @@ buy-currency-hint: "点击购买更多币种"
 buy-currency-message: "&a请点击下方链接购买币种:"
 buy-currency-click-here: "[点击这里]"
 
+# GUI抽奖机按钮
+lottery-button: "§6抽奖机"
+lottery-hint: "点击打开抽奖机"
+
+# GUI CDKey兑换按钮
+cdkey-button: "§b兑换CDKey"
+cdkey-hint: "点击输入兑换码"
+cdkey-enter-prompt: "&a请在聊天框中输入: /wsap cdkey redeem <兑换码>"
+
 # 商店GUI翻页相关
 prev-page: "&c上一页"
 next-page: "&a下一页"

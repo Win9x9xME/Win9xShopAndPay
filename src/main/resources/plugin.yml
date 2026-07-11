@@ -50,6 +50,9 @@ permissions:
   win9xshopandpay.give_shop:
     description: 获取商店指南针的权限
     default: true
+  win9xshopandpay.lottery:
+    description: 使用抽奖机的权限
+    default: true
   win9xshopandpay.ai.use:
     description: 使用AI助手的权限
     default: true

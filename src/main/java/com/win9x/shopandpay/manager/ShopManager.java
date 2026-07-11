@@ -102,4 +102,9 @@ public class ShopManager {
                 .findFirst()
                 .orElse(null);
     }
+
+    public void reload() {
+        shopItems.clear();
+        loadShopItems();
+    }
 }

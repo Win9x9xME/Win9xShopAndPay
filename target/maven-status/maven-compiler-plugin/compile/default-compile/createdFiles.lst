@@ -1,4 +1,5 @@
 com\win9x\shopandpay\manager\ShopManager.class
+com\win9x\shopandpay\manager\AIAssistantManager$WebSocketListener.class
 com\win9x\shopandpay\manager\LanguageManager.class
 com\win9x\shopandpay\gui\ShopItemListener.class
 com\win9x\shopandpay\manager\CurrencyManager.class
@@ -11,6 +12,7 @@ com\win9x\shopandpay\server\SimpleHttpServer$RootHandler.class
 com\win9x\shopandpay\manager\LotteryManager.class
 com\win9x\shopandpay\commands\ShopCommand.class
 com\win9x\shopandpay\gui\LotteryGUI.class
+com\win9x\shopandpay\manager\AIAssistantManager$ConnectionType.class
 com\win9x\shopandpay\manager\AIAssistantManager$Message.class
 com\win9x\shopandpay\data\Currency.class
 com\win9x\shopandpay\manager\AIAssistantManager.class

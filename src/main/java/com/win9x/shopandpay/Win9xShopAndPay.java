@@ -191,7 +191,9 @@ public class Win9xShopAndPay extends JavaPlugin {
     }
 
     private void registerCommands() {
-        getCommand("win9xshopandpay").setExecutor(new Win9xShopAndPayCommand(this));
+        Win9xShopAndPayCommand command = new Win9xShopAndPayCommand(this);
+        getCommand("win9xshopandpay").setExecutor(command);
+        getCommand("win9xshopandpay").setTabCompleter(command);
     }
 
     private void registerEvents() {

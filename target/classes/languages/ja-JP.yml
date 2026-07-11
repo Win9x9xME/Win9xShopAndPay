@@ -91,11 +91,20 @@ give-shop-success: "&aショップコンパスを獲得しました!"
 give-shop-cooldown: "&c{0}秒後に再度使用してください!"
 help-give-shop: "&7/wsap give_shop - ショップコンパスを取得"
 
-# GUI通貨購入ボタン
+# GUI购买币种按钮
 buy-currency-button: "他の通貨を購入"
 buy-currency-hint: "クリックして通貨を購入"
-buy-currency-message: "&a下のリンクをクリックして通貨を購入してください:"
+buy-currency-message: "&a以下のリンクをクリックして通貨を購入してください:"
 buy-currency-click-here: "[ここをクリック]"
+
+# GUI抽奖机按钮
+lottery-button: "§6抽選機"
+lottery-hint: "クリックして抽選機を開く"
+
+# GUI CDKey兑换按钮
+cdkey-button: "§bCDKeyを換金"
+cdkey-hint: "クリックしてコードを入力"
+cdkey-enter-prompt: "&aチャットに入力してください: /wsap cdkey redeem <コード>"
 
 # AIアシスタント関連
 ai-not-enabled: "AIアシスタントが有効になっていません。管理者に連絡してください。"

@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,12 +27,15 @@ public class AIAssistantManager {
     private volatile boolean enabled;
     private volatile String apiEndpoint;
     private volatile String apiKey;
+    private volatile String apiSecret;
+    private volatile String appId;
     private volatile String model;
     private volatile String name;
     private volatile boolean enableContext;
     private volatile int contextLength;
     private volatile String systemPrompt;
     private volatile String apiFormat;
+    private volatile String connectionType;
     private volatile Map<String, String> customHeaders;
     private volatile String requestTemplate;
     private volatile String responsePath;
@@ -39,6 +43,10 @@ public class AIAssistantManager {
 
     public enum ApiFormat {
         OPENAI, ANTHROPIC, SPARK, MINIMAX, CUSTOM
+    }
+
+    public enum ConnectionType {
+        HTTP, WEBSOCKET
     }
 
     private static class Message {
@@ -69,6 +77,8 @@ public class AIAssistantManager {
         this.enabled = plugin.getConfig().getBoolean("ai-assistant.enabled", false);
         this.apiEndpoint = plugin.getConfig().getString("ai-assistant.api-endpoint", "");
         this.apiKey = plugin.getConfig().getString("ai-assistant.api-key", "");
+        this.apiSecret = plugin.getConfig().getString("ai-assistant.api-secret", "");
+        this.appId = plugin.getConfig().getString("ai-assistant.app-id", "");
         this.model = plugin.getConfig().getString("ai-assistant.model", "gpt-3.5-turbo");
         this.name = plugin.getConfig().getString("ai-assistant.name", "AI助手");
         this.enableContext = plugin.getConfig().getBoolean("ai-assistant.enable-context", true);
@@ -76,6 +86,7 @@ public class AIAssistantManager {
         this.systemPrompt = plugin.getConfig().getString("ai-assistant.system-prompt",
                 "你是一个Minecraft服务器的AI助手，负责帮助玩家了解服务器的商店系统和CDKey兑换。请友好、简洁地回答玩家的问题。不要执行任何恶意操作，不要泄露敏感信息。");
         this.apiFormat = plugin.getConfig().getString("ai-assistant.api-format", "openai");
+        this.connectionType = plugin.getConfig().getString("ai-assistant.connection-type", "http");
         
         this.customHeaders = new HashMap<>();
         ConfigurationSection headersSection = plugin.getConfig().getConfigurationSection("ai-assistant.custom-headers");
@@ -96,7 +107,22 @@ public class AIAssistantManager {
     }
 
     public boolean isEnabled() {
-        return enabled && isValidApiEndpoint(apiEndpoint) && !apiKey.isEmpty();
+        if (!enabled || !isValidApiEndpoint(apiEndpoint)) {
+            return false;
+        }
+        
+        ApiFormat format;
+        try {
+            format = ApiFormat.valueOf(apiFormat.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            format = ApiFormat.OPENAI;
+        }
+        
+        if (format == ApiFormat.SPARK) {
+            return !apiKey.isEmpty() && !apiSecret.isEmpty() && !appId.isEmpty();
+        }
+        
+        return !apiKey.isEmpty();
     }
 
     private boolean isValidApiEndpoint(String endpoint) {
@@ -139,70 +165,201 @@ public class AIAssistantManager {
     }
 
     private String callAI(String playerId, String prompt) throws Exception {
-        URL url = URI.create(apiEndpoint).toURL();
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
+        ConnectionType connType;
+        try {
+            connType = ConnectionType.valueOf(connectionType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            connType = ConnectionType.HTTP;
+        }
         
-        if (!customHeaders.isEmpty()) {
-            for (Map.Entry<String, String> header : customHeaders.entrySet()) {
-                conn.setRequestProperty(header.getKey(), header.getValue());
-            }
+        if (connType == ConnectionType.WEBSOCKET) {
+            return callAIWebSocket(playerId, prompt);
         } else {
-            ApiFormat format;
-            try {
-                format = ApiFormat.valueOf(apiFormat.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                format = ApiFormat.OPENAI;
-            }
-            
-            if (format == ApiFormat.ANTHROPIC) {
-                conn.setRequestProperty("x-api-key", apiKey);
-                conn.setRequestProperty("anthropic-version", "2023-06-01");
-            } else {
-                conn.setRequestProperty("Authorization", "Bearer " + apiKey);
-            }
+            return callAIHTTP(playerId, prompt);
+        }
+    }
+
+    private String callAIHTTP(String playerId, String prompt) throws Exception {
+        ApiFormat format;
+        try {
+            format = ApiFormat.valueOf(apiFormat.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            format = ApiFormat.OPENAI;
         }
         
-        conn.setDoOutput(true);
-        conn.setConnectTimeout(10000);
-        conn.setReadTimeout(30000);
+        URL url = URI.create(apiEndpoint).toURL();
+        
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
 
-        String jsonPayload = buildJsonPayload(playerId, prompt);
-
-        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-            wr.writeBytes(jsonPayload);
-            wr.flush();
-        }
-
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200 && responseCode != 201) {
-            StringBuilder errorResponse = new StringBuilder();
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    errorResponse.append(line);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            
+            if (format == ApiFormat.SPARK) {
+                Map<String, String> sparkHeaders = buildSparkAuthHeaders(apiEndpoint);
+                for (Map.Entry<String, String> header : sparkHeaders.entrySet()) {
+                    conn.setRequestProperty(header.getKey(), header.getValue());
+                }
+            } else if (!customHeaders.isEmpty()) {
+                for (Map.Entry<String, String> header : customHeaders.entrySet()) {
+                    conn.setRequestProperty(header.getKey(), header.getValue());
+                }
+            } else {
+                if (format == ApiFormat.ANTHROPIC) {
+                    conn.setRequestProperty("x-api-key", apiKey);
+                    conn.setRequestProperty("anthropic-version", "2023-06-01");
+                } else {
+                    conn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 }
             }
-            throw new Exception("API returned status code: " + responseCode + ", error: " + errorResponse.toString());
-        }
+            
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(30000);
 
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = in.readLine()) != null) {
-                response.append(line);
+            String jsonPayload = buildJsonPayload(playerId, prompt);
+
+            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                wr.writeBytes(jsonPayload);
+                wr.flush();
+            }
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode != 200 && responseCode != 201) {
+                StringBuilder errorResponse = new StringBuilder();
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                }
+                throw new Exception("API returned status code: " + responseCode);
+            }
+
+            StringBuilder response = new StringBuilder();
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    response.append(line);
+                }
+            }
+
+            String content = parseResponse(response.toString());
+            if (enableContext && content != null) {
+                addMessageToContext(playerId, "user", prompt);
+                addMessageToContext(playerId, "assistant", content);
+            }
+
+            return content;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
             }
         }
+    }
 
-        String content = parseResponse(response.toString());
+    private String callAIWebSocket(String playerId, String prompt) throws Exception {
+        ApiFormat format;
+        try {
+            format = ApiFormat.valueOf(apiFormat.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            format = ApiFormat.OPENAI;
+        }
+
+        String wsEndpoint = apiEndpoint.replace("http://", "ws://").replace("https://", "wss://");
+        
+        String authUrl = buildSparkWebSocketAuthUrl(wsEndpoint);
+        WebSocketListener listener = new WebSocketListener();
+        
+        java.net.http.WebSocket ws = java.net.http.HttpClient.newHttpClient()
+                .newWebSocketBuilder()
+                .buildAsync(URI.create(authUrl), listener)
+                .get();
+
+        String jsonPayload = buildJsonPayload(playerId, prompt);
+        ws.sendText(jsonPayload, true);
+
+        synchronized (listener) {
+            listener.wait(30000);
+        }
+
+        String response = listener.getResponse();
+        ws.sendClose(java.net.http.WebSocket.NORMAL_CLOSURE, "Done");
+
+        if (response == null) {
+            throw new Exception("WebSocket connection timed out");
+        }
+
+        String content = parseResponse(response);
         if (enableContext && content != null) {
             addMessageToContext(playerId, "user", prompt);
             addMessageToContext(playerId, "assistant", content);
         }
 
         return content;
+    }
+
+    private String buildSparkWebSocketAuthUrl(String endpoint) throws Exception {
+        URI uri = URI.create(endpoint);
+        String host = uri.getHost();
+        String path = uri.getPath();
+        int port = uri.getPort();
+        if (port == -1) {
+            port = "wss".equals(uri.getScheme()) ? 443 : 80;
+        }
+        
+        String date = java.time.ZonedDateTime.now(java.time.ZoneId.of("GMT")).format(
+                java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME);
+        
+        String signingString = "host: " + host + "\ndate: " + date + "\nGET " + path + " HTTP/1.1";
+        
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] signature = mac.doFinal(signingString.getBytes(StandardCharsets.UTF_8));
+        
+        String signatureBase64 = java.util.Base64.getEncoder().encodeToString(signature);
+        String authorization = "api_key=\"" + apiKey + "\",algorithm=\"hmac-sha256\",headers=\"host date request-line\",signature=\"" + signatureBase64 + "\"";
+        
+        return endpoint + "?authorization=" + java.net.URLEncoder.encode(authorization, "UTF-8")
+                + "&date=" + java.net.URLEncoder.encode(date, "UTF-8")
+                + "&host=" + java.net.URLEncoder.encode(host, "UTF-8");
+    }
+
+    private class WebSocketListener implements java.net.http.WebSocket.Listener {
+        private String response;
+
+        @Override
+        public void onOpen(java.net.http.WebSocket webSocket) {
+            java.net.http.WebSocket.Listener.super.onOpen(webSocket);
+        }
+
+        @Override
+        public CompletionStage<?> onText(java.net.http.WebSocket webSocket, CharSequence data, boolean last) {
+            if (response == null) {
+                response = data.toString();
+            } else {
+                response += data.toString();
+            }
+            if (last) {
+                synchronized (this) {
+                    notify();
+                }
+            }
+            return java.net.http.WebSocket.Listener.super.onText(webSocket, data, last);
+        }
+
+        @Override
+        public void onError(java.net.http.WebSocket webSocket, Throwable error) {
+            synchronized (this) {
+                notify();
+            }
+            java.net.http.WebSocket.Listener.super.onError(webSocket, error);
+        }
+
+        public String getResponse() {
+            return response;
+        }
     }
 
     private String buildJsonPayload(String playerId, String prompt) {
@@ -305,8 +462,32 @@ public class AIAssistantManager {
         
         textBuilder.append("]");
         
-        return String.format("{\"header\":{\"app_id\":\"%s\"},\"parameter\":{\"chat\":{\"domain\":\"general\",\"temperature\":0.5,\"max_tokens\":4096}},\"payload\":{\"message\":{\"text\":%s}}}",
-                apiKey, textBuilder.toString());
+        return String.format("{\"header\":{\"app_id\":\"%s\"},\"parameter\":{\"chat\":{\"domain\":\"%s\",\"temperature\":0.5,\"max_tokens\":4096}},\"payload\":{\"message\":{\"text\":%s}}}",
+                appId, model, textBuilder.toString());
+    }
+
+    private Map<String, String> buildSparkAuthHeaders(String endpoint) throws Exception {
+        URI uri = URI.create(endpoint);
+        String host = uri.getHost();
+        String path = uri.getPath();
+        
+        String date = java.time.ZonedDateTime.now(java.time.ZoneId.of("GMT")).format(
+                java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME);
+        
+        String signingString = "host: " + host + "\ndate: " + date + "\nPOST " + path + " HTTP/1.1";
+        
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] signature = mac.doFinal(signingString.getBytes(StandardCharsets.UTF_8));
+        
+        String signatureBase64 = java.util.Base64.getEncoder().encodeToString(signature);
+        String authorization = "api_key=\"" + apiKey + "\",algorithm=\"hmac-sha256\",headers=\"host date request-line\",signature=\"" + signatureBase64 + "\"";
+        
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", authorization);
+        headers.put("Date", date);
+        headers.put("Host", host);
+        return headers;
     }
 
     private String buildMinimaxPayload(List<Message> messages) {
@@ -371,11 +552,12 @@ public class AIAssistantManager {
     }
 
     private void addMessageToContext(String playerId, String role, String content) {
-        List<Message> context = playerContexts.computeIfAbsent(playerId, k -> new ArrayList<>());
-        context.add(new Message(role, content));
-
-        while (context.size() > contextLength) {
-            context.remove(0);
+        List<Message> context = playerContexts.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (context) {
+            context.add(new Message(role, content));
+            while (context.size() > contextLength) {
+                context.remove(0);
+            }
         }
     }
 
@@ -393,7 +575,7 @@ public class AIAssistantManager {
                 path = "content.0.text";
                 break;
             case SPARK:
-                path = "payload.choices.0.message.content";
+                path = "payload.choices.text.0.content";
                 break;
             case MINIMAX:
                 path = "reply";

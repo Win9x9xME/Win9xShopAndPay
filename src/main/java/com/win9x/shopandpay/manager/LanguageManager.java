@@ -91,10 +91,7 @@ public class LanguageManager {
     }
 
     public String getMessage(String key, Player player) {
-        String language = plugin.getConfig().getString("language.default", "zh-CN");
-        if (!isValidLanguage(language)) {
-            language = defaultLanguage;
-        }
+        String language = getPlayerLanguage(player);
         return getMessage(key, language);
     }
 

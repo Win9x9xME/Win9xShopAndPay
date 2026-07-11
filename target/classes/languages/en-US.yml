@@ -91,11 +91,20 @@ give-shop-success: "&aYou received a Shop Compass!"
 give-shop-cooldown: "&cPlease wait {0} seconds before using again!"
 help-give-shop: "&7/wsap give_shop - Get Shop Compass"
 
-# GUI Buy Currency Button
+# GUI购买币种按钮
 buy-currency-button: "Buy Other Currencies"
 buy-currency-hint: "Click to buy more currencies"
 buy-currency-message: "&aPlease click the link below to buy currencies:"
 buy-currency-click-here: "[Click Here]"
+
+# GUI抽奖机按钮
+lottery-button: "§6Lottery"
+lottery-hint: "Click to open lottery machine"
+
+# GUI CDKey兑换按钮
+cdkey-button: "§bRedeem CDKey"
+cdkey-hint: "Click to enter code"
+cdkey-enter-prompt: "&aPlease type in chat: /wsap cdkey redeem <code>"
 
 # AI Assistant Related
 ai-not-enabled: "AI Assistant is not enabled. Please contact an administrator."
