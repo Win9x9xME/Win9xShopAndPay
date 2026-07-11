@@ -23,6 +23,7 @@ public class SimpleHttpServer {
     private HttpServer httpServer;
     private final Win9xShopAndPay plugin;
     private int port;
+    private String bindAddress;
     private volatile boolean running;
     private Timer timeoutTimer;
     
@@ -34,6 +35,7 @@ public class SimpleHttpServer {
     public SimpleHttpServer(Win9xShopAndPay plugin) {
         this.plugin = plugin;
         this.port = plugin.getConfig().getInt("gui.buy-currency-server-port", 8080);
+        this.bindAddress = plugin.getConfig().getString("gui.buy-currency-server-bind-address", "127.0.0.1");
     }
     
     public void start() {
@@ -44,7 +46,7 @@ public class SimpleHttpServer {
         }
         
         try {
-            httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
             httpServer.createContext("/", new RootHandler());
             httpServer.createContext("/buy-currency", new BuyCurrencyHandler());
             httpServer.setExecutor(null);

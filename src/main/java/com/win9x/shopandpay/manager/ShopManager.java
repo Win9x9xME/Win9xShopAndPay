@@ -17,11 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ShopManager {
 
     private final Win9xShopAndPay plugin;
-    private final List<ShopItem> shopItems = new ArrayList<>();
+    private final List<ShopItem> shopItems = new CopyOnWriteArrayList<>();
     private File shopItemsFile;
     private FileConfiguration shopItemsConfig;
 

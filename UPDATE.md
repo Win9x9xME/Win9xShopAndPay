@@ -1,5 +1,52 @@
 # 更新日志
 
+## Beta 4.0.0 - 2026-07-11
+
+### 安全修复
+
+#### 1. 离线玩家Vault余额调整支持
+
+- 修复 `CurrencyManager.setBalance(Player)` 在玩家离线时使用Vault存储会静默失败的问题
+- 当玩家离线且币种使用Vault存储时，自动回退到本地配置存储
+- 添加非负余额检查，防止设置负数余额
+
+#### 2. CDKey兑换线程安全增强
+
+- 将 `CDKey.uses` 从普通 `int` 改为 `AtomicInteger`，确保原子递增
+- 将 `CDKey.usedByPlayers` 从普通 `HashSet` 改为 `ConcurrentHashMap.newKeySet()`，确保线程安全
+- 修改 `CDKey.use()` 方法为原子操作，返回 `boolean` 表示是否成功使用
+- 防止多个玩家同时兑换同一CDKey时绕过单玩家使用限制
+
+#### 3. HTTP服务器安全加固
+
+- 默认绑定地址从 `0.0.0.0` 改为 `127.0.0.1`，仅限本地访问
+- 添加 `buy-currency-server-bind-address` 配置项，允许自定义绑定地址
+- 注释明确提示不推荐设置为 `0.0.0.0`（允许外网访问）
+
+#### 4. ShopManager线程安全
+
+- 将 `ShopManager.shopItems` 从普通 `ArrayList` 改为 `CopyOnWriteArrayList`，确保并发访问安全
+
+### 配置更新
+
+`config.yml` 新增配置项：
+
+```yaml
+gui:
+  buy-currency-server-bind-address: "127.0.0.1"  # 内置HTTP服务器绑定地址
+```
+
+### 更新文件
+
+- `CurrencyManager.java` - 添加离线玩家回退和负数检查
+- `CDKey.java` - 使用 `AtomicInteger` 和 `ConcurrentHashMap.newKeySet()`
+- `CDKeyManager.java` - 更新 `redeemCDKey` 处理 `use()` 返回值
+- `SimpleHttpServer.java` - 添加绑定地址配置
+- `ShopManager.java` - 使用 `CopyOnWriteArrayList`
+- `config.yml` - 添加绑定地址配置项
+
+***
+
 ## Beta 3.0.1 - 2026-07-11
 
 ### 新增功能
@@ -13,10 +60,10 @@
 
 #### 2. 存储方式兼容性
 
-| 存储方式 | 在线玩家 | 离线玩家 |
-|----------|----------|----------|
-| vault | ✅ 支持 | ❌ 不支持（Vault API限制） |
-| config | ✅ 支持 | ✅ 支持 |
+| 存储方式   | 在线玩家 | 离线玩家               |
+| ------ | ---- | ------------------ |
+| vault  | ✅ 支持 | ❌ 不支持（Vault API限制） |
+| config | ✅ 支持 | ✅ 支持               |
 
 ### 安全增强
 

@@ -85,9 +85,9 @@ public class ShopGUI implements Listener {
         playerItemPages.put(player.getUniqueId().toString(), itemPage);
         playerSearchTerms.put(player.getUniqueId().toString(), searchTerm);
 
-        String title = SERIALIZER.serialize(Component.text(languageManager.getMessage("shop-title", player, 
-                currency.getSymbol() + currency.getName()), NamedTextColor.DARK_PURPLE));
-        Inventory inventory = Bukkit.createInventory(null, INVENTORY_SIZE, title);
+        Component title = languageManager.getMessageComponent("shop-title", player, 
+                currency.getSymbol() + currency.getName());
+        Inventory inventory = Bukkit.createInventory(null, INVENTORY_SIZE, SERIALIZER.serialize(title));
 
         fillCurrencyBar(inventory, player, currencyId, currencyPage);
         fillItemArea(inventory, player, currencyId, itemPage, searchTerm);
@@ -108,7 +108,7 @@ public class ShopGUI implements Listener {
         ItemStack prevPage = createPageButton(player, "prev-currency", languageManager.getMessage("prev-page", player), Material.ARROW);
         PersistentDataContainer prevContainer = prevPage.getItemMeta().getPersistentDataContainer();
         prevContainer.set(currencyPageKey, PersistentDataType.INTEGER, page);
-        prevPage.getItemMeta().setDisplayName(SERIALIZER.serialize(Component.text("<", NamedTextColor.YELLOW)));
+        prevPage.getItemMeta().setDisplayName("§e<");
         prevPage.setItemMeta(prevPage.getItemMeta());
         inventory.setItem(0, prevPage);
 
@@ -125,10 +125,10 @@ public class ShopGUI implements Listener {
             if (meta != null) {
                 String displayName = currency.getSymbol() + currency.getName();
                 if (currency.getId().equals(selectedCurrencyId)) {
-                    displayName = "§a" + displayName;
+                    meta.setDisplayName("§a" + displayName);
+                } else {
+                    meta.setDisplayName(displayName);
                 }
-                
-                meta.setDisplayName(displayName);
                 
                 List<String> lore = new ArrayList<>();
                 double balance = currencyManager.getBalance(player, currency.getId());
@@ -155,7 +155,7 @@ public class ShopGUI implements Listener {
         ItemStack nextPage = createPageButton(player, "next-currency", languageManager.getMessage("next-page", player), Material.ARROW);
         PersistentDataContainer nextContainer = nextPage.getItemMeta().getPersistentDataContainer();
         nextContainer.set(currencyPageKey, PersistentDataType.INTEGER, page);
-        nextPage.getItemMeta().setDisplayName(SERIALIZER.serialize(Component.text(">", NamedTextColor.YELLOW)));
+        nextPage.getItemMeta().setDisplayName("§e>");
         nextPage.setItemMeta(nextPage.getItemMeta());
         inventory.setItem(8, nextPage);
     }
@@ -197,10 +197,10 @@ public class ShopGUI implements Listener {
                 
                 if (price > 0) {
                     Currency currency = currencyManager.getCurrency(currencyId);
-                    lore.add(SERIALIZER.serialize(languageManager.getMessageComponent("shop-price", player, currency.getSymbol(), price)));
-                    lore.add(SERIALIZER.serialize(languageManager.getMessageComponent("shop-click-to-buy", player)));
+                    lore.add(languageManager.getMessage("shop-price", player, currency.getSymbol(), price).replace("&", "§"));
+                    lore.add(languageManager.getMessage("shop-click-to-buy", player).replace("&", "§"));
                 } else {
-                    lore.add(SERIALIZER.serialize(languageManager.getMessageComponent("shop-currency-not-available", player)));
+                    lore.add(languageManager.getMessage("shop-currency-not-available", player).replace("&", "§"));
                 }
                 
                 meta.setLore(lore);
@@ -240,7 +240,7 @@ public class ShopGUI implements Listener {
         ItemStack prevPage = createPageButton(player, "prev-item", languageManager.getMessage("prev-page", player), Material.ARROW);
         PersistentDataContainer prevContainer = prevPage.getItemMeta().getPersistentDataContainer();
         prevContainer.set(itemPageKey, PersistentDataType.INTEGER, itemPage);
-        prevPage.getItemMeta().setDisplayName(SERIALIZER.serialize(Component.text("<", NamedTextColor.YELLOW)));
+        prevPage.getItemMeta().setDisplayName("§e<");
         prevPage.setItemMeta(prevPage.getItemMeta());
         inventory.setItem(45, prevPage);
 
@@ -285,7 +285,7 @@ public class ShopGUI implements Listener {
         ItemStack nextPage = createPageButton(player, "next-item", languageManager.getMessage("next-page", player), Material.ARROW);
         PersistentDataContainer nextContainer = nextPage.getItemMeta().getPersistentDataContainer();
         nextContainer.set(itemPageKey, PersistentDataType.INTEGER, itemPage);
-        nextPage.getItemMeta().setDisplayName(SERIALIZER.serialize(Component.text(">", NamedTextColor.YELLOW)));
+        nextPage.getItemMeta().setDisplayName("§e>");
         nextPage.setItemMeta(nextPage.getItemMeta());
         inventory.setItem(53, nextPage);
 
@@ -506,12 +506,14 @@ public class ShopGUI implements Listener {
     }
 
     private String extractCurrencyIdFromTitle(String title) {
+        title = title.replace("§", "");
         for (Currency currency : currencyManager.getAllCurrencies().values()) {
-            if (title.contains(currency.getSymbol())) {
+            if (title.contains(currency.getName()) || title.contains(currency.getSymbol())) {
                 return currency.getId();
             }
         }
-        return currencyManager.getDefaultCurrency().getId();
+        Currency defaultCurrency = currencyManager.getDefaultCurrency();
+        return defaultCurrency != null ? defaultCurrency.getId() : "coins";
     }
 
     @EventHandler

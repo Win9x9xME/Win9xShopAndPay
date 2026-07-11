@@ -133,8 +133,8 @@ public class CurrencyManager {
         }
 
         String playerId = player.getUniqueId().toString();
-        return playerBalances.computeIfAbsent(playerId, k -> new HashMap<>())
-                .getOrDefault(currencyId, 0.0);
+        Map<String, Double> balances = playerBalances.get(playerId);
+        return balances != null ? balances.getOrDefault(currencyId, 0.0) : 0.0;
     }
 
     public boolean withdraw(Player player, String currencyId, double amount) {
@@ -153,7 +153,7 @@ public class CurrencyManager {
         }
 
         String playerId = player.getUniqueId().toString();
-        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new HashMap<>());
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
         double currentBalance = balances.getOrDefault(currencyId, 0.0);
         
         if (currentBalance >= amount) {
@@ -179,7 +179,7 @@ public class CurrencyManager {
         }
 
         String playerId = player.getUniqueId().toString();
-        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new HashMap<>());
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
         double currentBalance = balances.getOrDefault(currencyId, 0.0);
         balances.put(currencyId, currentBalance + amount);
         savePlayerBalances();
@@ -211,6 +211,13 @@ public class CurrencyManager {
         }
 
         if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            if (!player.isOnline()) {
+                String playerId = player.getUniqueId().toString();
+                Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+                balances.put(currencyId, Math.max(0.0, amount));
+                savePlayerBalances();
+                return;
+            }
             Economy economy = plugin.getEconomy();
             if (economy != null) {
                 double currentBalance = economy.getBalance(player);
@@ -224,8 +231,8 @@ public class CurrencyManager {
         }
 
         String playerId = player.getUniqueId().toString();
-        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new HashMap<>());
-        balances.put(currencyId, amount);
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+        balances.put(currencyId, Math.max(0.0, amount));
         savePlayerBalances();
     }
 
@@ -248,8 +255,8 @@ public class CurrencyManager {
 
         String playerId = offlinePlayer.getUniqueId().toString();
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
-        double currentBalance = balances.getOrDefault(currencyId, 0.0);
-        balances.put(currencyId, currentBalance + amount);
+        Double currentBalance = balances.get(currencyId);
+        balances.put(currencyId, (currentBalance != null ? currentBalance : 0.0) + amount);
         savePlayerBalances();
     }
 
@@ -277,7 +284,7 @@ public class CurrencyManager {
 
         String playerId = offlinePlayer.getUniqueId().toString();
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
-        balances.put(currencyId, amount);
+        balances.put(currencyId, Math.max(0.0, amount));
         savePlayerBalances();
     }
 
@@ -299,7 +306,7 @@ public class CurrencyManager {
         }
 
         String playerId = offlinePlayer.getUniqueId().toString();
-        return playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
-                .getOrDefault(currencyId, 0.0);
+        Map<String, Double> balances = playerBalances.get(playerId);
+        return balances != null ? balances.getOrDefault(currencyId, 0.0) : 0.0;
     }
 }

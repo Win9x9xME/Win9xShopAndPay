@@ -135,10 +135,12 @@ public class CDKeyManager {
             return RedeemResult.ALREADY_USED;
         }
 
-        player.getInventory().addItem(cdKey.getItem());
-        cdKey.use(playerId);
-        saveCDKeys();
-        return RedeemResult.SUCCESS;
+        if (cdKey.use(playerId)) {
+            player.getInventory().addItem(cdKey.getItem());
+            saveCDKeys();
+            return RedeemResult.SUCCESS;
+        }
+        return RedeemResult.ALREADY_USED;
     }
 
     public boolean deleteCDKey(String key) {

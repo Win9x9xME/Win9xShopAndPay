@@ -2,34 +2,36 @@ package com.win9x.shopandpay.data;
 
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CDKey {
 
     private final String key;
     private final ItemStack item;
-    private int uses;
+    private final AtomicInteger uses;
     private final int maxUses;
     private final long expiryTime;
-    private final Set<String> usedByPlayers;
+    private final Set<String> usedByPlayers = ConcurrentHashMap.newKeySet();
 
     public CDKey(String key, ItemStack item, int uses, int maxUses, long expiryTime) {
         this.key = key;
         this.item = item;
-        this.uses = uses;
+        this.uses = new AtomicInteger(uses);
         this.maxUses = maxUses;
         this.expiryTime = expiryTime;
-        this.usedByPlayers = new HashSet<>();
     }
 
     public CDKey(String key, ItemStack item, int uses, int maxUses, long expiryTime, Set<String> usedByPlayers) {
         this.key = key;
         this.item = item;
-        this.uses = uses;
+        this.uses = new AtomicInteger(uses);
         this.maxUses = maxUses;
         this.expiryTime = expiryTime;
-        this.usedByPlayers = usedByPlayers != null ? usedByPlayers : new HashSet<>();
+        if (usedByPlayers != null) {
+            this.usedByPlayers.addAll(usedByPlayers);
+        }
     }
 
     public String getKey() {
@@ -41,7 +43,7 @@ public class CDKey {
     }
 
     public int getUses() {
-        return uses;
+        return uses.get();
     }
 
     public int getMaxUses() {
@@ -61,7 +63,7 @@ public class CDKey {
     }
 
     public boolean isExpired() {
-        if (uses >= maxUses) {
+        if (uses.get() >= maxUses) {
             return true;
         }
         
@@ -76,8 +78,11 @@ public class CDKey {
         return !usedByPlayers.contains(playerId);
     }
 
-    public void use(String playerId) {
-        uses++;
-        usedByPlayers.add(playerId);
+    public boolean use(String playerId) {
+        if (!usedByPlayers.add(playerId)) {
+            return false;
+        }
+        uses.incrementAndGet();
+        return true;
     }
 }

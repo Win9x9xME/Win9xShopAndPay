@@ -51,9 +51,7 @@ public class Win9xShopAndPay extends JavaPlugin {
         ColorCodeConverter.setBukkitAudiences(bukkitAudiences);
         
         if (!setupEconomy()) {
-            getLogger().severe("Vault economy not found! Disabling plugin...");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
+            getLogger().warning("Vault economy not found! Plugin will use internal currency system only.");
         }
         
         currencyManager = new CurrencyManager(this);
@@ -147,35 +145,20 @@ public class Win9xShopAndPay extends JavaPlugin {
     }
 
     private void secureDataFolder() {
-        try {
-            File dataFolder = getDataFolder();
-            if (dataFolder.exists() && dataFolder.isDirectory()) {
-                dataFolder.setReadable(true, true);
-                dataFolder.setWritable(true, true);
-                dataFolder.setExecutable(true, true);
-                
-                for (File file : dataFolder.listFiles()) {
-                    if (file.isFile()) {
-                        file.setReadable(true, true);
-                        file.setWritable(true, true);
-                    }
-                }
-                
-                File configFile = new File(dataFolder, "config.yml");
-                if (configFile.exists()) {
-                    configFile.setReadable(true, true);
-                    configFile.setWritable(true, true);
-                }
-            }
-        } catch (SecurityException e) {
-            getLogger().warning("Could not set secure permissions on data folder: " + e.getMessage());
+        File dataFolder = getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
         }
     }
 
     @Override
     public void onDisable() {
-        cdKeyManager.saveCDKeys();
-        currencyManager.savePlayerBalances();
+        if (cdKeyManager != null) {
+            cdKeyManager.saveCDKeys();
+        }
+        if (currencyManager != null) {
+            currencyManager.savePlayerBalances();
+        }
         if (aiAssistantManager != null) {
             aiAssistantManager.shutdown();
         }
@@ -190,14 +173,21 @@ public class Win9xShopAndPay extends JavaPlugin {
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().severe("Vault plugin not found! Please install Vault in your server's plugins/ folder.");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
+            getLogger().severe("No economy provider found! Vault is installed but no economy plugin (EssentialsX, CMI, etc.) is providing the Economy service.");
             return false;
         }
         economy = rsp.getProvider();
-        return economy != null;
+        if (economy == null) {
+            getLogger().severe("Economy provider is null! Please check your economy plugin configuration.");
+            return false;
+        }
+        getLogger().info("Successfully hooked into Vault economy: " + economy.getName());
+        return true;
     }
 
     private void registerCommands() {

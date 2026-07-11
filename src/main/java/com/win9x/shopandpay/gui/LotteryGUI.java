@@ -262,7 +262,7 @@ public class LotteryGUI implements Listener {
             }
             
             currentFrame[0]++;
-        }, 0, frameInterval / 50);
+        }, 0, Math.max(1, (int) (frameInterval / 50.0)));
     }
 
     private void showResult(Player player, LotteryPrize winningPrize) {

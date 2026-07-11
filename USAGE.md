@@ -628,10 +628,13 @@ plugins/Win9xShopAndPay/
 | 组件 | 线程安全措施 |
 |------|-------------|
 | `CDKeyManager` | 使用 `ConcurrentHashMap` 存储CDKey |
+| `CDKey` | 使用 `AtomicInteger` 计数，`ConcurrentHashMap.newKeySet()` 存储已使用玩家 |
 | `PlayerJoinListener` | 使用 `ConcurrentHashMap.newKeySet()` 存储已领取玩家 |
-| `CurrencyManager` | 使用 `ConcurrentHashMap` 存储玩家余额 |
+| `CurrencyManager` | 使用 `ConcurrentHashMap` 存储玩家余额，`ReadWriteLock` 保护保存操作 |
 | `AIAssistantManager` | 使用 `ConcurrentHashMap` 存储对话上下文，配置字段使用 `volatile` |
 | `LotteryGUI` | 使用 `AtomicBoolean` 防止并发抽奖 |
+| `LotteryManager` | 使用 `CopyOnWriteArrayList` 存储奖品列表 |
+| `ShopManager` | 使用 `CopyOnWriteArrayList` 存储商店物品 |
 
 ### 2. 文件路径安全
 
