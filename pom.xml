@@ -5,7 +5,7 @@
 
     <groupId>com.win9x.shopandpay</groupId>
     <artifactId>win9x-shop-and-pay</artifactId>
-    <version>1.0.0-SNAPSHOT-beta2</version>
+    <version>1.0.0-SNAPSHOT-beta3</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
-            <version>1.7.4</version>
+            <version>1.7.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

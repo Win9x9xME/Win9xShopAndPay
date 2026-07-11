@@ -16,6 +16,8 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -387,9 +389,9 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             return true;
         }
 
-        Player target = plugin.getServer().getPlayer(args[2]);
-        if (target == null) {
-            sendMessage(sender, "player-not-online");
+        OfflinePlayer offlinePlayer = getOfflinePlayerByName(args[2]);
+        if (offlinePlayer == null) {
+            sendMessage(sender, "player-not-found");
             return true;
         }
 
@@ -407,12 +409,15 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             return true;
         }
 
-        currencyManager.deposit(target, currencyId, amount);
+        currencyManager.deposit(offlinePlayer, currencyId, amount);
         Currency currency = currencyManager.getCurrency(currencyId);
         sendMessage(sender, "currency-give-success", 
-                target.getName(), currency.getSymbol(), amount, currency.getName());
-        sendMessage(target, "currency-give-receive", 
-                currency.getSymbol(), amount, currency.getName());
+                offlinePlayer.getName(), currency.getSymbol(), amount, currency.getName());
+        
+        if (offlinePlayer.isOnline()) {
+            sendMessage(offlinePlayer.getPlayer(), "currency-give-receive", 
+                    currency.getSymbol(), amount, currency.getName());
+        }
         return true;
     }
 
@@ -427,9 +432,9 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             return true;
         }
 
-        Player target = plugin.getServer().getPlayer(args[2]);
-        if (target == null) {
-            sendMessage(sender, "player-not-online");
+        OfflinePlayer offlinePlayer = getOfflinePlayerByName(args[2]);
+        if (offlinePlayer == null) {
+            sendMessage(sender, "player-not-found");
             return true;
         }
 
@@ -447,13 +452,16 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
             return true;
         }
 
-        currencyManager.setBalance(target, currencyId, amount);
+        currencyManager.setBalance(offlinePlayer, currencyId, amount);
         
         Currency currency = currencyManager.getCurrency(currencyId);
         sendMessage(sender, "currency-set-success", 
-                target.getName(), currency.getSymbol(), currency.getName(), amount);
-        sendMessage(target, "currency-set-receive", 
-                currency.getSymbol(), currency.getName(), amount);
+                offlinePlayer.getName(), currency.getSymbol(), currency.getName(), amount);
+        
+        if (offlinePlayer.isOnline()) {
+            sendMessage(offlinePlayer.getPlayer(), "currency-set-receive", 
+                    currency.getSymbol(), currency.getName(), amount);
+        }
         return true;
     }
 
@@ -614,5 +622,18 @@ public class Win9xShopAndPayCommand implements CommandExecutor {
         } else {
             sender.sendMessage(ColorCodeConverter.toLegacy(languageManager.getMessageComponent(key, "en-US", replacements)));
         }
+    }
+
+    private OfflinePlayer getOfflinePlayerByName(String name) {
+        Player onlinePlayer = plugin.getServer().getPlayer(name);
+        if (onlinePlayer != null) {
+            return onlinePlayer;
+        }
+        for (OfflinePlayer offlinePlayer : plugin.getServer().getOfflinePlayers()) {
+            if (name.equalsIgnoreCase(offlinePlayer.getName())) {
+                return offlinePlayer;
+            }
+        }
+        return null;
     }
 }

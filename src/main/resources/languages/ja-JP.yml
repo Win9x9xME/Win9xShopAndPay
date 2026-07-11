@@ -6,6 +6,7 @@
 no-permission: "&cこのコマンドを使用する権限がありません!"
 only-player: "&cプレイヤーのみがこのコマンドを使用できます!"
 player-not-online: "&cプレイヤーはオンラインではありません!"
+player-not-found: "&cプレイヤーが見つかりません!"
 invalid-argument: "&c無効な引数です!"
 
 # ショップ関連

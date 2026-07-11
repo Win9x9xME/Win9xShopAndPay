@@ -1,6 +1,54 @@
 # 更新日志
 
-## Beta 3.0.0 - 2026-07-10
+## Beta 3.0.1 - 2026-07-11
+
+### 新增功能
+
+#### 1. 离线玩家币种调整支持
+
+- 管理员现在可以给离线玩家调整币种余额
+- `CurrencyManager` 添加 `OfflinePlayer` 版本的 `deposit()`、`setBalance()`、`getBalance()` 方法
+- `giveCurrency` 和 `setCurrency` 命令支持离线玩家
+- 使用 `getOfflinePlayerByName()` 方法替代过时的 `Bukkit.getOfflinePlayer(String)` API
+
+#### 2. 存储方式兼容性
+
+| 存储方式 | 在线玩家 | 离线玩家 |
+|----------|----------|----------|
+| vault | ✅ 支持 | ❌ 不支持（Vault API限制） |
+| config | ✅ 支持 | ✅ 支持 |
+
+### 安全增强
+
+#### 1. 并发安全修复
+
+- `CDKeyManager`: 将 `cdKeys` 从普通 `HashMap` 改为 `ConcurrentHashMap`，防止并发修改异常
+- `PlayerJoinListener`: 将 `joinedPlayers` 从普通 `HashSet` 改为 `ConcurrentHashMap.newKeySet()`，确保线程安全
+- `CurrencyManager`: 初始化玩家余额时使用 `ConcurrentHashMap`
+- `AIAssistantManager`: 为所有配置字段添加 `volatile` 修饰符，确保多线程可见性
+
+#### 2. 依赖更新
+
+- 将 VaultAPI 版本从 `1.7.4`（CMI适配版）改回官方 `1.7.1` 版本
+- 官方版本通过 JitPack 仓库获取，无需本地安装，兼容性更好
+
+### 版本更新
+
+- 版本号更新为 `1.0.0-SNAPSHOT-beta3`
+
+### 更新文件
+
+- `CurrencyManager.java` - 添加离线玩家支持方法
+- `Win9xShopAndPayCommand.java` - 修改命令支持离线玩家
+- `CDKeyManager.java` - 并发安全修复
+- `PlayerJoinListener.java` - 并发安全修复
+- `AIAssistantManager.java` - 字段可见性修复
+- `pom.xml` - 更新版本号和依赖
+- 6个语言文件 - 添加 `player-not-found` 消息
+
+***
+
+## Beta 2.0.1 - 2026-07-10
 
 ### 新增功能
 

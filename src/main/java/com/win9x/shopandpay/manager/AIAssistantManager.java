@@ -23,18 +23,18 @@ public class AIAssistantManager {
 
     private final Win9xShopAndPay plugin;
     private final ExecutorService executorService;
-    private boolean enabled;
-    private String apiEndpoint;
-    private String apiKey;
-    private String model;
-    private String name;
-    private boolean enableContext;
-    private int contextLength;
-    private String systemPrompt;
-    private String apiFormat;
-    private Map<String, String> customHeaders;
-    private String requestTemplate;
-    private String responsePath;
+    private volatile boolean enabled;
+    private volatile String apiEndpoint;
+    private volatile String apiKey;
+    private volatile String model;
+    private volatile String name;
+    private volatile boolean enableContext;
+    private volatile int contextLength;
+    private volatile String systemPrompt;
+    private volatile String apiFormat;
+    private volatile Map<String, String> customHeaders;
+    private volatile String requestTemplate;
+    private volatile String responsePath;
     private final Map<String, List<Message>> playerContexts = new ConcurrentHashMap<>();
 
     public enum ApiFormat {

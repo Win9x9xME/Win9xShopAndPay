@@ -12,11 +12,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CDKeyManager {
 
     private final Win9xShopAndPay plugin;
-    private final Map<String, CDKey> cdKeys = new HashMap<>();
+    private final Map<String, CDKey> cdKeys = new ConcurrentHashMap<>();
     private File cdKeyFile;
     private FileConfiguration cdKeyConfig;
 

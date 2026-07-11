@@ -13,14 +13,14 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerJoinListener implements Listener {
 
     private final Win9xShopAndPay plugin;
     private final LanguageManager languageManager;
-    private final Set<String> joinedPlayers = new HashSet<>();
+    private final Set<String> joinedPlayers = ConcurrentHashMap.newKeySet();
     private File playersFile;
 
     public PlayerJoinListener(Win9xShopAndPay plugin) {

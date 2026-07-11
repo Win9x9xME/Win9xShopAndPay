@@ -6,6 +6,7 @@
 no-permission: "&c沒有權限使用此命令!"
 only-player: "&c只有玩家可以使用此命令!"
 player-not-online: "&c玩家不在線!"
+player-not-found: "&c未找到該玩家!"
 invalid-argument: "&c無效的參數!"
 
 # 商店相關

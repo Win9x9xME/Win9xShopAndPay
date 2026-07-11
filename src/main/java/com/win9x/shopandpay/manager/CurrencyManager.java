@@ -6,6 +6,8 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -83,7 +85,7 @@ public class CurrencyManager {
         balanceConfig = YamlConfiguration.loadConfiguration(balanceFile);
         
         for (String playerId : balanceConfig.getKeys(false)) {
-            Map<String, Double> balances = new HashMap<>();
+            Map<String, Double> balances = new ConcurrentHashMap<>();
             ConfigurationSection playerSection = balanceConfig.getConfigurationSection(playerId);
             if (playerSection != null) {
                 for (String currencyId : playerSection.getKeys(false)) {
@@ -225,5 +227,79 @@ public class CurrencyManager {
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new HashMap<>());
         balances.put(currencyId, amount);
         savePlayerBalances();
+    }
+
+    public void deposit(OfflinePlayer offlinePlayer, String currencyId, double amount) {
+        Currency currency = currencies.get(currencyId);
+        if (currency == null || amount <= 0) {
+            return;
+        }
+
+        if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            Player player = offlinePlayer.getPlayer();
+            if (player != null && player.isOnline()) {
+                Economy economy = plugin.getEconomy();
+                if (economy != null) {
+                    economy.depositPlayer(player, amount);
+                }
+            }
+            return;
+        }
+
+        String playerId = offlinePlayer.getUniqueId().toString();
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+        double currentBalance = balances.getOrDefault(currencyId, 0.0);
+        balances.put(currencyId, currentBalance + amount);
+        savePlayerBalances();
+    }
+
+    public void setBalance(OfflinePlayer offlinePlayer, String currencyId, double amount) {
+        Currency currency = currencies.get(currencyId);
+        if (currency == null) {
+            return;
+        }
+
+        if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            Player player = offlinePlayer.getPlayer();
+            if (player != null && player.isOnline()) {
+                Economy economy = plugin.getEconomy();
+                if (economy != null) {
+                    double currentBalance = economy.getBalance(player);
+                    if (currentBalance > amount) {
+                        economy.withdrawPlayer(player, currentBalance - amount);
+                    } else if (currentBalance < amount) {
+                        economy.depositPlayer(player, amount - currentBalance);
+                    }
+                }
+            }
+            return;
+        }
+
+        String playerId = offlinePlayer.getUniqueId().toString();
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+        balances.put(currencyId, amount);
+        savePlayerBalances();
+    }
+
+    public double getBalance(OfflinePlayer offlinePlayer, String currencyId) {
+        Currency currency = currencies.get(currencyId);
+        if (currency == null) {
+            return 0;
+        }
+
+        if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            Player player = offlinePlayer.getPlayer();
+            if (player != null && player.isOnline()) {
+                Economy economy = plugin.getEconomy();
+                if (economy != null) {
+                    return economy.getBalance(player);
+                }
+            }
+            return 0;
+        }
+
+        String playerId = offlinePlayer.getUniqueId().toString();
+        return playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
+                .getOrDefault(currencyId, 0.0);
     }
 }

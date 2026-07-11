@@ -8,6 +8,7 @@
 - [抽奖机配置](#抽奖机配置)
 - [命令列表](#命令列表)
 - [权限说明](#权限说明)
+- [安全说明](#安全说明)
 
 ---
 
@@ -503,10 +504,37 @@ lottery:
 | `/wsap currency balance` | 查看余额 | 所有玩家 |
 | `/wsap currency balance <币种>` | 查看指定币种余额 | 所有玩家 |
 | `/wsap currency list` | 列出所有币种 | 所有玩家 |
-| `/wsap currency give <玩家> <币种> <数量>` | 给予币种 | OP |
-| `/wsap currency set <玩家> <币种> <数量>` | 设置余额 | OP |
+| `/wsap currency give <玩家> <币种> <数量>` | 给予币种（支持离线玩家） | OP |
+| `/wsap currency set <玩家> <币种> <数量>` | 设置余额（支持离线玩家） | OP |
 | `/wsap give_shop` | 获取商店指南针 | 所有玩家 |
 | `/wsap reload` | 重载配置 | OP |
+
+### 离线玩家支持
+
+管理员现在可以给离线玩家调整币种余额：
+
+**命令示例：**
+```
+# 给离线玩家增加币种
+/wsap currency give Player1 coins 1000
+
+# 设置离线玩家的余额
+/wsap currency set Player1 gems 50
+```
+
+**存储方式兼容性：**
+
+| 存储方式 | 在线玩家 | 离线玩家 | 说明 |
+|----------|----------|----------|------|
+| `vault` | ✅ 支持 | ❌ 不支持 | Vault API需要在线玩家对象 |
+| `config` | ✅ 支持 | ✅ 支持 | 数据存储在 `balances.yml` 文件中 |
+
+**注意事项：**
+
+1. **Vault存储限制**：使用 Vault 存储的币种（如默认的金币）只有在玩家在线时才能调整
+2. **内置存储支持**：使用 config 存储的币种无论玩家是否在线都可以调整
+3. **玩家验证**：如果玩家从未在服务器上登录过，会显示"未找到该玩家"提示
+4. **在线通知**：如果玩家在线，会收到余额变化的提示消息；离线玩家上线后会看到更新后的余额
 
 ### CDKey有效期格式
 
@@ -588,3 +616,48 @@ plugins/Win9xShopAndPay/
     ├── ja-JP.yml           # 日语
     └── ko-KR.yml           # 韩语
 ```
+
+---
+
+## 安全说明
+
+### 1. 并发安全
+
+插件使用以下线程安全机制：
+
+| 组件 | 线程安全措施 |
+|------|-------------|
+| `CDKeyManager` | 使用 `ConcurrentHashMap` 存储CDKey |
+| `PlayerJoinListener` | 使用 `ConcurrentHashMap.newKeySet()` 存储已领取玩家 |
+| `CurrencyManager` | 使用 `ConcurrentHashMap` 存储玩家余额 |
+| `AIAssistantManager` | 使用 `ConcurrentHashMap` 存储对话上下文，配置字段使用 `volatile` |
+| `LotteryGUI` | 使用 `AtomicBoolean` 防止并发抽奖 |
+
+### 2. 文件路径安全
+
+- 内置HTTP服务器仅允许访问插件数据目录内的文件
+- 使用 `getCanonicalPath()` 验证路径，防止路径遍历攻击
+- 文件名白名单机制，仅允许指定扩展名的文件访问
+
+### 3. API安全
+
+- AI API密钥存储在配置文件中，插件启动时自动设置文件权限为仅所有者可读
+- API请求添加超时设置（连接超时10秒，读取超时30秒）
+- 自定义请求头验证，防止HTTP头注入攻击
+
+### 4. 权限控制
+
+- 所有管理员命令需要相应的权限节点
+- 玩家无法直接修改他人余额（需管理员权限）
+- CDKey兑换有玩家单次使用限制
+
+### 5. 依赖安全
+
+- 使用官方 VaultAPI 版本（1.7.1），通过 JitPack 仓库获取
+- 依赖配置使用 `provided` 范围，避免冲突
+
+### 6. 配置验证
+
+- 抽奖消耗金额、权重、数量不能为负数
+- AI API端点必须是有效的HTTP/HTTPS URL
+- Material类型无效时自动回退到默认值
