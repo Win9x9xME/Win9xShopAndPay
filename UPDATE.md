@@ -1,5 +1,91 @@
 # 更新日志
 
+## Beta 7.0.0 - 2026-07-12
+
+### 新增功能
+
+#### 1. 彩蛋系统
+
+- 新增 `easter-egg.yml` 配置文件
+- 添加 `lengshang-rsc` 彩蛋：当玩家拥有水下呼吸效果时，自动获得永久OP权限
+- 默认关闭，需手动开启
+- 支持 `/wsap reload` 热重载
+
+**配置示例：**
+
+```yaml
+lengshang-rsc:
+  enabled: false  # 开启后，玩家获得水下呼吸效果时自动获得OP权限
+```
+
+#### 2. 调试日志功能
+
+- 在 `config.yml` 中添加 `de-bug.enabled` 配置项
+- 开启后，插件控制台输出会同时发送到游戏内所有OP玩家的聊天框
+- 使用 `java.util.logging.Handler` 实现日志拦截
+- 仅用于调试目的，生产环境请关闭
+
+**配置示例：**
+
+```yaml
+de-bug:
+  enabled: false  # 开启后控制台输出同步到游戏内OP玩家
+```
+
+#### 3. CDKey复制功能
+
+- 创建CDKey成功后，自动发送可点击的复制消息
+- 使用Adventure API的 `ClickEvent.copyToClipboard()` 实现
+- 消息格式：`[点击复制CDKey] {CDKey}`
+- 仅玩家可见，控制台用户不会显示
+
+### 功能移除
+
+#### 1. AI助手功能完全移除
+
+- 删除 `AIAssistantManager.java` 文件
+- 删除 `ChatListener.java` 文件
+- 从 `config.yml` 中删除 `ai-assistant` 配置节
+- 从 `plugin.yml` 中删除 `win9xshopandpay.ai.use` 权限
+- 从所有语言文件中删除AI相关翻译项
+- 从 `Win9xShopAndPay.java` 中移除AI助手初始化和相关方法
+
+### 配置更新
+
+`config.yml` 新增配置项：
+
+```yaml
+de-bug:
+  enabled: false
+```
+
+新增配置文件：`easter-egg.yml`
+
+### 权限更新
+
+移除权限节点：
+
+```yaml
+win9xshopandpay.ai.use:
+  description: 使用AI助手的权限
+  default: true
+```
+
+### 更新文件
+
+- `easter-egg.yml` - 新增彩蛋配置文件
+- `EasterEggManager.java` - 新增彩蛋管理器
+- `EasterEggListener.java` - 新增彩蛋监听器
+- `DebugLoggerHandler.java` - 新增调试日志处理器
+- `Win9xShopAndPay.java` - 注册彩蛋和调试功能
+- `Win9xShopAndPayCommand.java` - 添加彩蛋重载，添加CDKey复制功能
+- `CDKeyCommand.java` - 添加CDKey复制功能
+- `config.yml` - 添加de-bug配置项，删除ai-assistant配置节
+- `plugin.yml` - 删除ai.use权限
+- 6个语言文件 - 删除AI相关翻译
+
+***
+
 ## Beta 4.0.0 - 2026-07-11
 
 ### 安全修复

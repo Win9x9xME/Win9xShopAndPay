@@ -12,6 +12,7 @@ import com.win9x.shopandpay.manager.LanguageManager;
 import com.win9x.shopandpay.util.ColorCodeConverter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -228,6 +229,15 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
         } else {
             sendMessage(sender, "cdkey-create-permanent");
         }
+        
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            Component copyMessage = Component.text("[点击复制CDKey] ", NamedTextColor.GOLD)
+                    .append(Component.text(key, NamedTextColor.GREEN))
+                    .clickEvent(ClickEvent.copyToClipboard(key));
+            plugin.getBukkitAudiences().player(player).sendMessage(copyMessage);
+        }
+        
         return true;
     }
 
@@ -500,12 +510,12 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.reloadConfig();
-        plugin.reloadAIConfig();
         languageManager.reloadLanguages();
         currencyManager.reload();
         plugin.getShopManager().reload();
         cdKeyManager.reload();
         plugin.getLotteryManager().reload();
+        plugin.getEasterEggManager().reload();
         sendMessage(sender, "reload-success");
         return true;
     }

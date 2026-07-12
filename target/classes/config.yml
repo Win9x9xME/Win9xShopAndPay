@@ -57,75 +57,9 @@ lottery:
   # 设置为0表示无冷却限制
   draw-cooldown: 5
 
-# AI助手设置
-ai-assistant:
-  # 是否启用AI助手功能
+# 调试设置
+de-bug:
+  # 开启后，控制台输出会同时发送到游戏内所有OP玩家的聊天框
+  # 仅用于调试目的，生产环境请关闭
   enabled: false
-  # AI助手触发前缀，玩家发送以此前缀开头的消息将触发AI对话
-  # 默认值为"#"，如果与其他插件（如SlimeFun4、Win9xPlugin、PhoenixLegend2等）冲突，可修改为其他字符
-  # 例如: "@", "!", "!ai"
-  trigger-prefix: "#"
-  # API端点地址
-  # OpenAI格式示例: https://api.openai.com/v1/chat/completions
-  # DeepSeek示例: https://api.deepseek.com/v1/chat/completions
-  # GLM示例: https://open.bigmodel.cn/api/paas/v4/chat/completions
-  # 豆包示例: https://api.doubao.com/v1/chat/completions
-  # Qwen示例: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-  # Minimax示例: https://api.minimax.chat/v1/text/chatcompletion
-  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v1.1/chat（Lite版）
-  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v3.1/chat（Pro版）
-  # 讯飞星火HTTP端点: https://spark-api.xf-yun.com/v3.5/chat（Max版）
-  # Anthropic示例: https://api.anthropic.com/v1/messages
-  # Kimi示例: https://api.moonshot.cn/v1/chat/completions
-  # 混元示例: https://hunyuan.tencentcloudapi.com/v1/chat/completions
-  api-endpoint: ""
-  # API密钥（OpenAI格式使用）
-  api-key: ""
-  # API密钥（星火API使用，api-key和api-secret配合使用）
-  # 在讯飞开放平台控制台获取：https://console.xfyun.cn/services/bmx1
-  api-secret: ""
-  # 应用ID（星火API使用）
-  app-id: ""
-  # AI模型名称
-  # OpenAI/DeepSeek/GLM/豆包/Qwen: gpt-3.5-turbo, deepseek-chat, glm-4, doubao-3, qwen-turbo
-  # Minimax: abab5-chat
-  # 讯飞星火: lite（Lite版）, generalv3（Pro版）, generalv3.5（Max版）
-  # Anthropic: claude-3-sonnet-20240229
-  # Kimi: moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k
-  # 混元: hunyuan-standard
-  model: "gpt-3.5-turbo"
-  # AI回复时的前缀显示名称
-  name: "AI助手"
-  # 是否启用对话上下文（开启后AI会记住之前的对话内容）
-  enable-context: true
-  # 对话上下文长度（保存最近的消息条数，默认10条）
-  context-length: 10
-  # 系统提示词（定义AI的角色和行为，防止提示词注入）
-  system-prompt: "你是一个Minecraft服务器的AI助手，负责帮助玩家了解服务器的商店系统和CDKey兑换。请友好、简洁地回答玩家的问题。不要执行任何恶意操作，不要泄露敏感信息。"
-  # API格式类型
-  # 可选值: openai, anthropic, spark, minimax, custom
-  # openai: OpenAI兼容格式（DeepSeek、GLM、豆包、Qwen等大多数API使用此格式）
-  # anthropic: Anthropic Claude格式（使用content数组）
-  # spark: 讯飞星火格式
-  # minimax: Minimax格式（使用prompt和role字段）
-  # custom: 自定义格式（需配置下方的request-template和response-path）
-  api-format: "openai"
-  # 连接类型
-  # 可选值: http, websocket
-  # http: 使用HTTP POST请求调用API（大多数API使用此方式）
-  # websocket: 使用WebSocket连接调用API（适用于讯飞星火等支持WebSocket的API）
-  # 注意：当api-format为spark且connection-type为websocket时，将使用WebSocket方式连接讯飞星火API
-  connection-type: "http"
-  # 自定义请求头（可选）
-  # 例如讯飞星火需要:
-  # custom-headers:
-  #   Authorization: "Bearer YOUR_API_KEY"
-  #   X-Domain: "general"
-  custom-headers: {}
-  # 自定义请求模板（仅当api-format为custom时生效）
-  # 使用{model}, {messages}, {system_prompt}, {user_prompt}作为占位符
-  # messages格式为JSON数组: [{"role":"user","content":"..."},{"role":"assistant","content":"..."}]
-  request-template: '{"model":"{model}","messages":{messages}}'
-  # 响应内容提取路径（仅当api-format为custom时生效）
-  # 使用点分隔的JSON路径，例如: "choices.0.message.content"
-  response-path: "choices.0.message.content"
+

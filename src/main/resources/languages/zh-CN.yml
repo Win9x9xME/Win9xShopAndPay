@@ -116,10 +116,6 @@ search-hint: "&e搜索物品"
 search-click: "&7点击输入搜索关键词"
 search-input: "&e请输入要搜索的物品名称:"
 
-# AI助手相关
-ai-not-enabled: "AI助手未启用，请联系管理员配置。"
-ai-no-permission: "你没有使用AI助手的权限。"
-
 # 抽奖相关
 help-lottery: "&7/wsap lottery - 打开抽奖机"
 lottery-spinning: "&c抽奖正在进行中，请稍候!"

@@ -4,16 +4,17 @@ import com.win9x.shopandpay.commands.Win9xShopAndPayCommand;
 import com.win9x.shopandpay.gui.LotteryGUI;
 import com.win9x.shopandpay.gui.ShopGUI;
 import com.win9x.shopandpay.gui.ShopItemListener;
-import com.win9x.shopandpay.listener.ChatListener;
+import com.win9x.shopandpay.listener.EasterEggListener;
 import com.win9x.shopandpay.listener.PlayerJoinListener;
-import com.win9x.shopandpay.manager.AIAssistantManager;
 import com.win9x.shopandpay.manager.CDKeyManager;
 import com.win9x.shopandpay.manager.CurrencyManager;
+import com.win9x.shopandpay.manager.EasterEggManager;
 import com.win9x.shopandpay.manager.LanguageManager;
 import com.win9x.shopandpay.manager.LotteryManager;
 import com.win9x.shopandpay.manager.ShopManager;
 import com.win9x.shopandpay.server.SimpleHttpServer;
 import com.win9x.shopandpay.util.ColorCodeConverter;
+import com.win9x.shopandpay.util.DebugLoggerHandler;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -37,7 +38,7 @@ public class Win9xShopAndPay extends JavaPlugin {
     private LanguageManager languageManager;
     private LotteryManager lotteryManager;
     private LotteryGUI lotteryGUI;
-    private AIAssistantManager aiAssistantManager;
+    private EasterEggManager easterEggManager;
     private BukkitAudiences bukkitAudiences;
     private SimpleHttpServer httpServer;
 
@@ -59,12 +60,14 @@ public class Win9xShopAndPay extends JavaPlugin {
         cdKeyManager = new CDKeyManager(this);
         languageManager = new LanguageManager(this);
         lotteryManager = new LotteryManager(this);
-        aiAssistantManager = new AIAssistantManager(this);
+        easterEggManager = new EasterEggManager(this);
         
         registerCommands();
         registerEvents();
         
         generateDefaultBuyCurrencyHtml();
+        
+        getLogger().addHandler(new DebugLoggerHandler(this));
         
         getLogger().info("Win9xShopAndPay has been enabled!");
         getLogger().info("GitHub: https://github.com/Win9x9xME/Win9xShopAndPay");
@@ -159,9 +162,6 @@ public class Win9xShopAndPay extends JavaPlugin {
         if (currencyManager != null) {
             currencyManager.savePlayerBalances();
         }
-        if (aiAssistantManager != null) {
-            aiAssistantManager.shutdown();
-        }
         if (httpServer != null) {
             httpServer.stop();
         }
@@ -201,7 +201,7 @@ public class Win9xShopAndPay extends JavaPlugin {
         pm.registerEvents(new ShopGUI(this), this);
         pm.registerEvents(new ShopItemListener(this), this);
         pm.registerEvents(new PlayerJoinListener(this), this);
-        pm.registerEvents(new ChatListener(this), this);
+        pm.registerEvents(new EasterEggListener(easterEggManager), this);
         lotteryGUI = new LotteryGUI(this);
         pm.registerEvents(lotteryGUI, this);
     }
@@ -230,20 +230,6 @@ public class Win9xShopAndPay extends JavaPlugin {
         return languageManager;
     }
 
-    public AIAssistantManager getAIAssistantManager() {
-        return aiAssistantManager;
-    }
-
-    public String getTriggerPrefix() {
-        return getConfig().getString("ai-assistant.trigger-prefix", "#");
-    }
-
-    public void reloadAIConfig() {
-        if (aiAssistantManager != null) {
-            aiAssistantManager.loadConfig();
-        }
-    }
-
     public BukkitAudiences getBukkitAudiences() {
         return bukkitAudiences;
     }
@@ -258,5 +244,9 @@ public class Win9xShopAndPay extends JavaPlugin {
     
     public LotteryGUI getLotteryGUI() {
         return lotteryGUI;
+    }
+    
+    public EasterEggManager getEasterEggManager() {
+        return easterEggManager;
     }
 }

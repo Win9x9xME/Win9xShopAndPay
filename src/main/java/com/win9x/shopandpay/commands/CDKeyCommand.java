@@ -5,6 +5,9 @@ import com.win9x.shopandpay.data.CDKey;
 import com.win9x.shopandpay.manager.CDKeyManager;
 import com.win9x.shopandpay.manager.LanguageManager;
 import com.win9x.shopandpay.util.ColorCodeConverter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -120,6 +123,15 @@ public class CDKeyCommand implements CommandExecutor {
         sendMessage(sender, "cdkey-create-success", key);
         sendMessage(sender, "cdkey-create-item", material.name(), amount);
         sendMessage(sender, "cdkey-create-max-uses", maxUses);
+        
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            Component copyMessage = Component.text("[点击复制CDKey] ", NamedTextColor.GOLD)
+                    .append(Component.text(key, NamedTextColor.GREEN))
+                    .clickEvent(ClickEvent.copyToClipboard(key));
+            plugin.getBukkitAudiences().player(player).sendMessage(copyMessage);
+        }
+        
         return true;
     }
 

@@ -106,10 +106,7 @@ cdkey-button: "§bCDKeyを換金"
 cdkey-hint: "クリックしてコードを入力"
 cdkey-enter-prompt: "&aチャットに入力してください: /wsap cdkey redeem <コード>"
 
-# AIアシスタント関連
-ai-not-enabled: "AIアシスタントが有効になっていません。管理者に連絡してください。"
-ai-no-permission: "AIアシスタントを使用する権限がありません。"
-
+# 抽選関連
 help-lottery: "&7/wsap lottery - 抽選機を開く"
 lottery-spinning: "&c抽選中です、お待ちください!"
 lottery-not-enough-currency: "&c通貨が不足しています! {0}{1} 必要です"

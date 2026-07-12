@@ -106,10 +106,6 @@ cdkey-button: "§bRedeem CDKey"
 cdkey-hint: "Click to enter code"
 cdkey-enter-prompt: "&aPlease type in chat: /wsap cdkey redeem <code>"
 
-# AI Assistant Related
-ai-not-enabled: "AI Assistant is not enabled. Please contact an administrator."
-ai-no-permission: "You do not have permission to use AI Assistant."
-
 help-lottery: "&7/wsap lottery - Open lottery machine"
 lottery-spinning: "&cLottery is in progress, please wait!"
 lottery-not-enough-currency: "&cInsufficient currency! Need {0}{1}"

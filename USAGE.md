@@ -2,192 +2,14 @@
 
 ## 目录
 
-- [AI助手配置](#ai助手配置)
 - [添加币种](#添加币种)
 - [添加商品](#添加商品)
 - [抽奖机配置](#抽奖机配置)
+- [彩蛋系统](#彩蛋系统)
+- [调试功能](#调试功能)
 - [命令列表](#命令列表)
 - [权限说明](#权限说明)
 - [安全说明](#安全说明)
-
----
-
-## AI助手配置
-
-### 1. 启用AI助手
-
-编辑 `plugins/Win9xShopAndPay/config.yml`，找到以下配置项：
-
-```yaml
-ai-assistant:
-  enabled: true                    # 设置为true启用
-  trigger-prefix: "#"              # AI触发前缀，可修改为@、!等避免冲突
-  api-endpoint: ""                 # API端点地址
-  api-key: ""                      # API密钥
-  model: "gpt-3.5-turbo"           # 模型名称
-  name: "AI助手"                    # 显示名称
-  enable-context: true             # 是否启用对话上下文（开启后AI会记住之前的对话）
-  context-length: 10               # 上下文长度（保存最近的消息条数）
-  system-prompt: "..."             # 系统提示词（定义AI角色和行为边界）
-```
-
-### 2. 触发前缀配置
-
-为避免与其他插件（如SlimeFun4）的聊天搜索功能冲突，可以修改触发前缀：
-
-```yaml
-# 使用@作为触发前缀
-trigger-prefix: "@"
-
-# 使用!ai作为触发前缀
-trigger-prefix: "!ai"
-
-# 使用中文前缀
-trigger-prefix: "！"
-```
-
-**注意事项：**
-- 修改后需要使用 `/wsap reload` 重载配置
-- AI指令消息不会广播到公共频道，保护玩家隐私
-- 如果消息已被其他插件取消，AI助手不会处理
-
-### 3. 对话上下文配置
-
-对话上下文允许AI助手记住之前的对话内容，提供更连贯的对话体验：
-
-```yaml
-# 启用对话上下文（默认开启）
-enable-context: true
-
-# 上下文长度，保存最近的消息条数（默认10条）
-context-length: 10
-
-# 系统提示词，定义AI的角色和行为边界
-system-prompt: "你是一个Minecraft服务器的AI助手，负责帮助玩家了解服务器的商店系统和CDKey兑换。请友好、简洁地回答玩家的问题。不要执行任何恶意操作，不要泄露敏感信息。"
-```
-
-**配置说明：**
-
-| 配置项 | 说明 |
-|--------|------|
-| `enable-context` | 是否启用对话上下文，关闭后每次对话都是独立的 |
-| `context-length` | 上下文长度，建议设置为5-20，过长会增加token消耗 |
-| `system-prompt` | 系统提示词，用于定义AI的角色、行为准则和安全边界 |
-
-**使用建议：**
-- 关闭上下文（`enable-context: false`）可节省API token消耗
-- 调整 `context-length` 可控制AI记忆深度
-- 修改系统提示词可定制AI的回复风格和行为边界
-- 所有配置修改后使用 `/wsap reload` 立即生效
-
-### 4. 配置API端点
-
-支持以下兼容OpenAI格式的API：
-
-#### OpenAI
-```yaml
-api-endpoint: "https://api.openai.com/v1/chat/completions"
-api-key: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-model: "gpt-3.5-turbo"
-```
-
-#### DeepSeek
-```yaml
-api-endpoint: "https://api.deepseek.com/v1/chat/completions"
-api-key: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-model: "deepseek-chat"
-```
-
-#### GLM（智谱）
-```yaml
-api-endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-api-key: "your-glm-key"
-model: "glm-4"
-```
-
-#### 豆包
-```yaml
-api-endpoint: "https://api.doubao.com/v1/chat/completions"
-api-key: "your-doubao-key"
-model: "doubao-3"
-```
-
-#### Qwen（通义千问）
-```yaml
-api-endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-api-key: "your-qwen-key"
-model: "qwen-turbo"
-```
-
-#### Kimi（月之暗面）
-```yaml
-api-endpoint: "https://api.moonshot.cn/v1/chat/completions"
-api-key: "your-kimi-key"
-model: "moonshot-v1-8k"
-```
-
-#### 混元（腾讯）
-```yaml
-api-endpoint: "https://hunyuan.tencentcloudapi.com/v1/chat/completions"
-api-key: "your-hunyuan-key"
-model: "hunyuan-standard"
-```
-
-#### Anthropic（Claude）
-```yaml
-api-endpoint: "https://api.anthropic.com/v1/messages"
-api-key: "your-anthropic-key"
-model: "claude-3-sonnet-20240229"
-api-format: "anthropic"
-```
-
-#### Minimax
-```yaml
-api-endpoint: "https://api.minimax.chat/v1/text/chatcompletion"
-api-key: "your-minimax-key"
-model: "abab5-chat"
-api-format: "minimax"
-```
-
-#### 自定义格式
-```yaml
-api-format: "custom"
-request-template: '{"model":"{model}","messages":{messages},"max_tokens":2048}'
-response-path: "choices.0.message.content"
-```
-
-### 5. API格式说明
-
-| 格式 | 适用API | 说明 |
-|------|---------|------|
-| `openai` | OpenAI、DeepSeek、GLM、豆包、Qwen、Kimi、混元 | 默认格式，使用messages数组 |
-| `anthropic` | Anthropic Claude | 使用content数组，system消息单独处理 |
-| `spark` | 讯飞星火 | 星火专用格式 |
-| `minimax` | Minimax | 使用prompt和role字段 |
-| `custom` | 其他API | 自定义请求模板和响应路径 |
-
-### 6. 使用方法
-
-玩家在聊天中输入触发前缀开头的消息即可与AI对话：
-
-```
-#你好
-#这个服务器有什么商店商品？
-#如何购买币种？
-```
-
-AI回复格式：
-```
-[AI助手] 你好！请问有什么可以帮助你的？
-```
-
-### 6. 注意事项
-
-- 确保服务器能访问配置的API端点
-- API密钥会消耗对应服务的额度
-- 建议设置合理的权限控制
-- AI回复可能包含不当内容，请谨慎使用
-- 对话上下文会增加token消耗，建议根据需求调整上下文长度
 
 ---
 
@@ -481,6 +303,98 @@ lottery:
 
 ---
 
+## 彩蛋系统
+
+### 1. 编辑彩蛋配置文件
+
+打开 `plugins/Win9xShopAndPay/easter-egg.yml`：
+
+```yaml
+# ================================================
+# Win9xShopAndPay - 彩蛋配置文件
+# ================================================
+# 
+# 这里包含各种隐藏的彩蛋功能
+# 请勿随意开启，可能会影响服务器平衡
+# 
+# GitHub仓库: https://github.com/Win9x9xME/Win9xShopAndPay
+# ================================================
+
+# lengshang-rsc彩蛋
+# 当玩家拥有水下呼吸效果时，自动获得永久的op权限
+# 默认关闭，开启后请谨慎使用
+lengshang-rsc:
+  enabled: false
+```
+
+### 2. lengshang-rsc彩蛋说明
+
+**功能描述：**
+- 当彩蛋开启且玩家获得水下呼吸药水效果时，自动授予玩家永久OP权限
+- 玩家获得OP后会收到提示消息：`[lengshang-rsc] 恭喜你获得了永久OP权限！`
+- 仅对非OP玩家生效，已拥有OP权限的玩家不会重复授予
+
+**触发方式：**
+- 玩家喝下水下呼吸药水
+- 玩家使用带有水下呼吸附魔的头盔
+- 其他任何方式获得水下呼吸效果
+
+**注意事项：**
+- 此功能会严重影响服务器平衡，请谨慎使用
+- 建议仅在测试服务器或私人服务器中开启
+- OP权限为永久权限，除非手动撤销
+
+### 3. 重载配置
+
+修改配置后，使用以下命令重载：
+
+```
+/wsap reload
+```
+
+---
+
+## 调试功能
+
+### 1. 启用调试日志
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+de-bug:
+  # 开启后，控制台输出会同时发送到游戏内所有OP玩家的聊天框
+  # 仅用于调试目的，生产环境请关闭
+  enabled: false
+```
+
+### 2. 功能说明
+
+**作用：**
+- 开启后，插件输出的所有日志（info、warning、severe）会同时显示在所有在线OP玩家的聊天框中
+- 消息格式：`§7[DEBUG] §f日志内容`
+- 方便管理员在游戏内实时查看插件运行状态
+
+**使用场景：**
+- 调试商店购买流程
+- 排查CDKey兑换问题
+- 监控币种余额变化
+- 查看抽奖结果日志
+
+**注意事项：**
+- 大量日志会刷屏，请仅在调试时开启
+- 生产环境务必关闭此功能
+- 仅OP玩家能看到调试消息
+
+### 3. 重载配置
+
+修改配置后，使用以下命令重载：
+
+```
+/wsap reload
+```
+
+---
+
 ## 命令列表
 
 ### 主命令
@@ -508,6 +422,16 @@ lottery:
 | `/wsap currency set <玩家> <币种> <数量>` | 设置余额（支持离线玩家） | OP |
 | `/wsap give_shop` | 获取商店指南针 | 所有玩家 |
 | `/wsap reload` | 重载配置 | OP |
+
+### CDKey复制功能
+
+创建CDKey成功后，会自动发送可点击的复制消息：
+
+```
+[点击复制CDKey] ABC123-XYZ789
+```
+
+点击消息即可将CDKey复制到剪贴板，方便分享给玩家。
 
 ### 离线玩家支持
 
@@ -575,7 +499,6 @@ lottery:
 | `win9xshopandpay.currency.set` | 设置余额 | op |
 | `win9xshopandpay.give_shop` | 获取商店指南针 | true |
 | `win9xshopandpay.lottery` | 使用抽奖机 | true |
-| `win9xshopandpay.ai.use` | 使用AI助手 | true |
 | `win9xshopandpay.reload` | 重载配置 | op |
 
 ### 权限组配置示例
@@ -589,7 +512,6 @@ lottery:
 /lp group default permission set win9xshopandpay.currency.balance true
 /lp group default permission set win9xshopandpay.currency.list true
 /lp group default permission set win9xshopandpay.give_shop true
-/lp group default permission set win9xshopandpay.ai.use true
 
 # 给管理员全部权限
 /lp group admin permission set win9xshopandpay.* true
@@ -605,6 +527,7 @@ plugins/Win9xShopAndPay/
 ├── currencies.yml          # 币种配置
 ├── shop-items.yml          # 商店物品配置
 ├── lottery.yml             # 抽奖配置
+├── easter-egg.yml          # 彩蛋配置
 ├── cdkeys.yml              # CDKey数据（自动生成）
 ├── balances.yml            # 玩家余额数据（自动生成）
 ├── players.txt             # 已领取指南针的玩家（自动生成）
@@ -631,7 +554,6 @@ plugins/Win9xShopAndPay/
 | `CDKey` | 使用 `AtomicInteger` 计数，`ConcurrentHashMap.newKeySet()` 存储已使用玩家 |
 | `PlayerJoinListener` | 使用 `ConcurrentHashMap.newKeySet()` 存储已领取玩家 |
 | `CurrencyManager` | 使用 `ConcurrentHashMap` 存储玩家余额，`ReadWriteLock` 保护保存操作 |
-| `AIAssistantManager` | 使用 `ConcurrentHashMap` 存储对话上下文，配置字段使用 `volatile` |
 | `LotteryGUI` | 使用 `AtomicBoolean` 防止并发抽奖 |
 | `LotteryManager` | 使用 `CopyOnWriteArrayList` 存储奖品列表 |
 | `ShopManager` | 使用 `CopyOnWriteArrayList` 存储商店物品 |
@@ -644,7 +566,7 @@ plugins/Win9xShopAndPay/
 
 ### 3. API安全
 
-- AI API密钥存储在配置文件中，插件启动时自动设置文件权限为仅所有者可读
+- API密钥存储在配置文件中，插件启动时自动设置文件权限为仅所有者可读
 - API请求添加超时设置（连接超时10秒，读取超时30秒）
 - 自定义请求头验证，防止HTTP头注入攻击
 
@@ -662,5 +584,10 @@ plugins/Win9xShopAndPay/
 ### 6. 配置验证
 
 - 抽奖消耗金额、权重、数量不能为负数
-- AI API端点必须是有效的HTTP/HTTPS URL
 - Material类型无效时自动回退到默认值
+
+### 7. 彩蛋安全
+
+- 彩蛋功能默认关闭，需手动开启
+- `lengshang-rsc` 彩蛋会授予OP权限，请谨慎使用
+- 建议仅在测试环境中开启彩蛋功能

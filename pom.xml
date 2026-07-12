@@ -5,7 +5,7 @@
 
     <groupId>com.win9x.shopandpay</groupId>
     <artifactId>win9x-shop-and-pay</artifactId>
-    <version>1.0.0-SNAPSHOT-beta6</version>
+    <version>1.0.0-SNAPSHOT-beta7</version>
     <packaging>jar</packaging>
 
     <properties>
