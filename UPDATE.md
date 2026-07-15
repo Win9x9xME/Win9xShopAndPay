@@ -1,5 +1,121 @@
 # 更新日志
 
+## 1.0.1-RELEASE - 2026-07-15
+
+### 平台与依赖
+
+- 依赖 API 由 Spigot 1.20.1 迁移至 **Paper API 1.21.1**（需 Paper 1.21.1+ 服务端）
+- `plugin.yml` 的 `api-version` 更新为 `1.21`
+- Adventure API 升级至 `4.17.0`；引入 Gson（`provided`）用于 AI JSON 解析
+- 版本号：`1.0.0-SNAPSHOT-beta7` → **`1.0.1-RELEASE`**
+
+### 新增功能
+
+#### 1. 自由市场 / 拍卖行
+
+- 玩家可将主手物品上架，其他玩家购买；支持上架手续费、下架、最大在架数量等配置
+- 命令：`/wsap market`、`/wsap market my`、`/wsap market sell <价格>`
+- 数据持久化至 `market.yml`
+- 权限：`win9xshopandpay.market.use`、`win9xshopandpay.market.sell`
+
+#### 2. 系统收购
+
+- 玩家可将背包中可回收物品一键卖给系统换取货币
+- 价格表：`buyback.yml`；命令：`/wsap buyback`
+- 权限：`win9xshopandpay.buyback`
+
+#### 3. 贷款系统
+
+- 玩家向系统借款，期限与利率可配置；到期应还 = 本金 × (1 + 利率)
+- 逾期由定时任务强制扣款（内部币种可扣成负数；Vault 失败则保留贷款重试）
+- 命令：`/wsap loan borrow|repay|info`
+- 数据：`loans.yml`；权限：`win9xshopandpay.loan`
+
+#### 4. 周期性彩票（区别于抽奖机）
+
+- 每 `c` 天一期，购买期内可买任意金额；下期开放时按金额加权开奖上一期
+- 命令：`/wsap ticket buy|info|history`
+- 数据：`lottery-tickets.yml`；权限：`win9xshopandpay.ticket`
+
+#### 5. 银行系统
+
+- 活期：按周期复利计息；定期：按配置档位到期给付本息，可提前支取（默认没收利息）
+- 命令：`/wsap bank info|deposit|withdraw|claim|early`
+- 数据：`bank.yml`；权限：`win9xshopandpay.bank`
+
+#### 6. AI 助手（聊天模式）
+
+- 由根目录 `internalAI02.py` 移植为 Java（思知机器人 API）
+- `/wsap ai` 开关聊天模式；支持自定义前后缀、系统提示词、冷却时间
+- 权限：`win9xshopandpay.ai`
+
+#### 7. 多语言扩展至 20 种
+
+在原有 6 种基础上，新增：
+
+| 批次 | 语言 |
+|------|------|
+| 第一批 | 法语 `fr-FR`、德语 `de-DE`、西班牙语 `es-ES`、俄语 `ru-RU` |
+| 第二批 | 意大利语 `it-IT`、巴西/欧洲葡萄牙语 `pt-BR`/`pt-PT`、荷兰语 `nl-NL`、波兰语 `pl-PL`、土耳其语 `tr-TR`、乌克兰语 `uk-UA`、捷克语 `cs-CZ`、越南语 `vi-VN`、印尼语 `id-ID` |
+
+保留：`zh-CN`、`zh-TW`、`en-US`、`en-GB`、`ja-JP`、`ko-KR`。根据玩家客户端 locale 自动匹配。
+
+### 修复与改进
+
+#### 商店与搜索
+
+- 修复 `ShopCommand` 单例分裂问题（统一使用主类持有的 GUI 实例）
+- 修复搜索功能空壳：聊天监听捕获关键词后正确过滤并重新打开商店
+
+#### 安全修复（全面审查，未改动 `lengshang-rsc`）
+
+- GUI 身份校验：商店/抽奖/市场/收购改用自定义 `InventoryHolder`，避免标题匹配误伤
+- CDKey：原子 `use()` + 背包干跑检查 + `rollbackUse`；兑换需权限；创建时校验数量与物品类型
+- 币种：`withdraw`/`deposit` 原子化；新增 `withdrawForce`（逾期扣款）；修复离线 Vault 发奖只给在线玩家的问题
+- 经济持久化：借款/银行领取/彩票开奖「先写盘再转账」，防止崩溃重复发奖
+- 银行：修复定期到期被标记 `MATURED` 后无法 `claim` 的逻辑错误
+- 金额校验：拒绝 `NaN` / `Infinity`
+- 调试日志：仅转发本插件 logger 的记录，避免泄露其他插件/服务器日志
+- AI：每玩家冷却、消息长度截断；调试与敏感信息隔离
+
+### 配置更新（`config.yml` 摘要）
+
+```yaml
+ai:
+  enabled: true
+  url / appid / prefix / suffix / system-prompt / cooldown-seconds
+
+market:
+  list-fee / refund-fee-on-delist / max-listings-per-player / max-list-amount / currency-id
+
+buyback:
+  enabled / currency-id / default-price / only-configured
+
+loan:
+  enabled / currency-id / interest-rate / term-days / max-amount / max-active-loans
+
+lottery-ticket:
+  enabled / currency-id / cycle-days / min-amount / payout-ratio / history-kept
+
+bank:
+  enabled / currency-id / demand-rate / period-hours / fixed-early-withdraw-penalty / fixed-terms
+```
+
+### 权限更新
+
+新增：`win9xshopandpay.market.use`、`market.sell`、`buyback`、`loan`、`ticket`、`bank`、`ai`（默认均为 `true`）。
+
+### 主要新增 / 更新文件
+
+- 数据类：`Loan`、`LotteryTicketRound`、`FixedDeposit`、`MarketListing`
+- 管理器：`LoanManager`、`LotteryTicketManager`、`BankManager`、`MarketManager`、`BuybackManager`、`AiManager`
+- GUI：`MarketGUI`、`BuybackGUI` 及对应 `InventoryHolder`；`ShopGUI`/`LotteryGUI` 重构
+- `CurrencyManager`、`Win9xShopAndPay`、`Win9xShopAndPayCommand`、`ChatListener`
+- `buyback.yml`；20 个 `languages/*.yml`；`pom.xml` / `plugin.yml` / `config.yml`
+- 文档：`USAGE.md`（新增市场/收购/贷款/彩票/银行/AI/多语言章节）、`UPDATE.md`（本条目）
+
+***
+
 ## Beta 7.0.0 - 2026-07-12
 
 ### 新增功能

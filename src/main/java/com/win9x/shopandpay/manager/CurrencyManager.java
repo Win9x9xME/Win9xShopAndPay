@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -145,23 +146,61 @@ public class CurrencyManager {
 
         if ("vault".equalsIgnoreCase(currency.getStorage())) {
             Economy economy = plugin.getEconomy();
-            if (economy != null && economy.has(player, amount)) {
-                economy.withdrawPlayer(player, amount);
-                return true;
+            if (economy == null || !economy.has(player, amount)) {
+                return false;
             }
-            return false;
+            net.milkbowl.vault.economy.EconomyResponse response = economy.withdrawPlayer(player, amount);
+            return response != null && response.transactionSuccess();
         }
 
         String playerId = player.getUniqueId().toString();
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
-        double currentBalance = balances.getOrDefault(currencyId, 0.0);
-        
-        if (currentBalance >= amount) {
-            balances.put(currencyId, currentBalance - amount);
+        AtomicBoolean success = new AtomicBoolean(false);
+        balances.compute(currencyId, (k, current) -> {
+            double c = (current == null) ? 0.0 : current;
+            if (c >= amount) {
+                success.set(true);
+                return c - amount;
+            }
+            return c;
+        });
+        if (success.get()) {
             savePlayerBalances();
             return true;
         }
         return false;
+    }
+
+    /**
+     * Force-withdraws an amount regardless of the player's balance, allowing the
+     * balance to go negative. Used for system actions such as overdue loan
+     * collection. For internal currencies this can produce a negative balance;
+     * for Vault it relies on the economy plugin's overdraft behaviour and
+     * returns whether the transaction actually succeeded.
+     */
+    public boolean withdrawForce(org.bukkit.OfflinePlayer offlinePlayer, String currencyId, double amount) {
+        Currency currency = currencies.get(currencyId);
+        if (currency == null || !Double.isFinite(amount) || amount <= 0) {
+            return false;
+        }
+
+        if ("vault".equalsIgnoreCase(currency.getStorage())) {
+            Economy economy = plugin.getEconomy();
+            if (economy == null) {
+                return false;
+            }
+            net.milkbowl.vault.economy.EconomyResponse response = economy.withdrawPlayer(offlinePlayer, amount);
+            return response != null && response.transactionSuccess();
+        }
+
+        String playerId = offlinePlayer.getUniqueId().toString();
+        Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+        balances.compute(currencyId, (k, current) -> {
+            double c = (current == null) ? 0.0 : current;
+            return c - amount;
+        });
+        savePlayerBalances();
+        return true;
     }
 
     public void deposit(Player player, String currencyId, double amount) {
@@ -174,14 +213,12 @@ public class CurrencyManager {
             Economy economy = plugin.getEconomy();
             if (economy != null) {
                 economy.depositPlayer(player, amount);
-            }
-            return;
+            }            return;
         }
 
         String playerId = player.getUniqueId().toString();
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
-        double currentBalance = balances.getOrDefault(currencyId, 0.0);
-        balances.put(currencyId, currentBalance + amount);
+        balances.merge(currencyId, amount, Double::sum);
         savePlayerBalances();
     }
 
@@ -243,20 +280,16 @@ public class CurrencyManager {
         }
 
         if ("vault".equalsIgnoreCase(currency.getStorage())) {
-            Player player = offlinePlayer.getPlayer();
-            if (player != null && player.isOnline()) {
-                Economy economy = plugin.getEconomy();
-                if (economy != null) {
-                    economy.depositPlayer(player, amount);
-                }
+            Economy economy = plugin.getEconomy();
+            if (economy != null) {
+                economy.depositPlayer(offlinePlayer, amount);
             }
             return;
         }
 
         String playerId = offlinePlayer.getUniqueId().toString();
         Map<String, Double> balances = playerBalances.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
-        Double currentBalance = balances.get(currencyId);
-        balances.put(currencyId, (currentBalance != null ? currentBalance : 0.0) + amount);
+        balances.merge(currencyId, amount, Double::sum);
         savePlayerBalances();
     }
 

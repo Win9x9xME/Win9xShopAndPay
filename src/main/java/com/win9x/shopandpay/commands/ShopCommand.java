@@ -33,7 +33,11 @@ public class ShopCommand implements CommandExecutor {
             return true;
         }
 
-        ShopGUI shopGUI = new ShopGUI(plugin);
+        ShopGUI shopGUI = plugin.getShopGUI();
+        if (shopGUI == null) {
+            sender.sendMessage("§c商店尚未就绪，请稍后再试。");
+            return true;
+        }
         shopGUI.openShop(player);
         return true;
     }

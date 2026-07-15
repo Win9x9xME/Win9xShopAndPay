@@ -26,9 +26,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ShopGUI implements Listener {
 
@@ -44,6 +42,8 @@ public class ShopGUI implements Listener {
     private final NamespacedKey searchKey;
     private final NamespacedKey lotteryKey;
     private final NamespacedKey cdkeyKey;
+
+    private final java.util.Map<java.util.UUID, String> awaitingSearch = new java.util.concurrent.ConcurrentHashMap<>();
     
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
     
@@ -51,10 +51,6 @@ public class ShopGUI implements Listener {
     private static final int CURRENCY_SLOTS_PER_PAGE = 7;
     private static final int ITEM_SLOTS_PER_PAGE = 36;
     private static final int SEARCH_SLOTS_PER_PAGE = 7;
-    
-    private final Map<String, Integer> playerCurrencyPages = new HashMap<>();
-    private final Map<String, Integer> playerItemPages = new HashMap<>();
-    private final Map<String, String> playerSearchTerms = new HashMap<>();
 
     public ShopGUI(Win9xShopAndPay plugin) {
         this.plugin = plugin;
@@ -78,20 +74,26 @@ public class ShopGUI implements Listener {
         openShop(player, currencyId, 0, 0, "");
     }
 
+    public void openShop(Player player, String currencyId, String searchTerm) {
+        openShop(player, currencyId, 0, 0, searchTerm == null ? "" : searchTerm);
+    }
+
     private void openShop(Player player, String currencyId, int currencyPage, int itemPage, String searchTerm) {
         Currency currency = currencyManager.getCurrency(currencyId);
         if (currency == null) {
             currency = currencyManager.getDefaultCurrency();
+            if (currency == null) {
+                ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("currency-invalid", player));
+                return;
+            }
             currencyId = currency.getId();
         }
 
-        playerCurrencyPages.put(player.getUniqueId().toString(), currencyPage);
-        playerItemPages.put(player.getUniqueId().toString(), itemPage);
-        playerSearchTerms.put(player.getUniqueId().toString(), searchTerm);
-
-        Component title = languageManager.getMessageComponent("shop-title", player, 
+        Component title = languageManager.getMessageComponent("shop-title", player,
                 currency.getSymbol() + currency.getName());
-        Inventory inventory = Bukkit.createInventory(null, INVENTORY_SIZE, SERIALIZER.serialize(title));
+        ShopInventoryHolder holder = new ShopInventoryHolder(currencyId, currencyPage, itemPage, searchTerm);
+        Inventory inventory = Bukkit.createInventory(holder, INVENTORY_SIZE, SERIALIZER.serialize(title));
+        holder.setInventory(inventory);
 
         fillCurrencyBar(inventory, player, currencyId, currencyPage);
         fillItemArea(inventory, player, currencyId, itemPage, searchTerm);
@@ -341,25 +343,27 @@ public class ShopGUI implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        
+
         Player player = (Player) event.getWhoClicked();
-        
-        if (event.getClickedInventory() == null || event.getClickedInventory().equals(player.getInventory())) {
+
+        Inventory topInventory = event.getView().getTopInventory();
+        if (!(topInventory.getHolder() instanceof ShopInventoryHolder)) return;
+
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(topInventory)) {
             return;
         }
-        
+
         int slot = event.getSlot();
-        
+
         if (slot < 0 || slot >= INVENTORY_SIZE) return;
 
         event.setCancelled(true);
 
-        String playerId = player.getUniqueId().toString();
-        String title = event.getView().getTitle();
-        String currentCurrencyId = extractCurrencyIdFromTitle(title);
-        int currentCurrencyPage = playerCurrencyPages.getOrDefault(playerId, 0);
-        int currentItemPage = playerItemPages.getOrDefault(playerId, 0);
-        String currentSearchTerm = playerSearchTerms.getOrDefault(playerId, "");
+        ShopInventoryHolder holder = (ShopInventoryHolder) topInventory.getHolder();
+        String currentCurrencyId = holder.getCurrencyId();
+        int currentCurrencyPage = holder.getCurrencyPage();
+        int currentItemPage = holder.getItemPage();
+        String currentSearchTerm = holder.getSearchTerm();
 
         if (slot == 0) {
             handleCurrencyPageChange(player, currentCurrencyId, currentCurrencyPage - 1, currentItemPage, currentSearchTerm);
@@ -372,22 +376,22 @@ public class ShopGUI implements Listener {
         }
 
         if (slot >= 1 && slot <= 7) {
-            handleCurrencyClick(event.getInventory().getItem(slot), player, currentItemPage, currentSearchTerm);
+            handleCurrencyClick(event.getInventory().getItem(slot), player, currentCurrencyPage, currentItemPage, currentSearchTerm);
             return;
         }
 
         if (slot >= 9 && slot <= 44) {
-            handleItemClick(player, slot - 9, currentCurrencyId, currentItemPage, currentSearchTerm);
+            handleItemClick(player, slot - 9, currentCurrencyId, currentCurrencyPage, currentItemPage, currentSearchTerm);
             return;
         }
 
         if (slot == 45) {
-            handleItemPageChange(player, currentCurrencyId, currentItemPage - 1, currentSearchTerm);
+            handleItemPageChange(player, currentCurrencyId, currentCurrencyPage, currentItemPage - 1, currentSearchTerm);
             return;
         }
 
         if (slot == 53) {
-            handleItemPageChange(player, currentCurrencyId, currentItemPage + 1, currentSearchTerm);
+            handleItemPageChange(player, currentCurrencyId, currentCurrencyPage, currentItemPage + 1, currentSearchTerm);
             return;
         }
 
@@ -424,7 +428,7 @@ public class ShopGUI implements Listener {
         openShop(player, currentCurrencyId, newPage, itemPage, searchTerm);
     }
 
-    private void handleItemPageChange(Player player, String currencyId, int newPage, String searchTerm) {
+    private void handleItemPageChange(Player player, String currencyId, int currencyPage, int newPage, String searchTerm) {
         List<ShopItem> allItems = shopManager.getShopItems();
         
         if (searchTerm != null && !searchTerm.isEmpty()) {
@@ -445,10 +449,10 @@ public class ShopGUI implements Listener {
         if (newPage < 0) newPage = totalPages - 1;
         if (newPage >= totalPages) newPage = 0;
         
-        openShop(player, currencyId, playerCurrencyPages.getOrDefault(player.getUniqueId().toString(), 0), newPage, searchTerm);
+        openShop(player, currencyId, currencyPage, newPage, searchTerm);
     }
 
-    private void handleCurrencyClick(ItemStack item, Player player, int itemPage, String searchTerm) {
+    private void handleCurrencyClick(ItemStack item, Player player, int currencyPage, int itemPage, String searchTerm) {
         if (item == null || item.getItemMeta() == null) return;
         
         PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
@@ -456,11 +460,11 @@ public class ShopGUI implements Listener {
         
         String currencyId = container.get(currencyKey, PersistentDataType.STRING);
         if (currencyId != null) {
-            openShop(player, currencyId, playerCurrencyPages.getOrDefault(player.getUniqueId().toString(), 0), itemPage, searchTerm);
+            openShop(player, currencyId, currencyPage, itemPage, searchTerm);
         }
     }
 
-    private void handleItemClick(Player player, int relativeSlot, String currencyId, int itemPage, String searchTerm) {
+    private void handleItemClick(Player player, int relativeSlot, String currencyId, int currencyPage, int itemPage, String searchTerm) {
         List<ShopItem> allItems = shopManager.getShopItems();
         
         if (searchTerm != null && !searchTerm.isEmpty()) {
@@ -499,16 +503,25 @@ public class ShopGUI implements Listener {
             return;
         }
 
-        player.getInventory().addItem(shopItem.getItem());
+        giveItemSafely(player, shopItem.getItem().clone());
         ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("shop-buy-success", player, 
                 shopItem.getItem().getAmount(), shopItem.getItem().getType().name()));
         
-        openShop(player, currencyId, playerCurrencyPages.getOrDefault(player.getUniqueId().toString(), 0), itemPage, searchTerm);
+        openShop(player, currencyId, currencyPage, itemPage, searchTerm);
     }
 
     private void handleSearchClick(Player player, String currencyId, int itemPage) {
+        awaitingSearch.put(player.getUniqueId(), currencyId);
         player.closeInventory();
         ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("search-input", player));
+    }
+
+    public boolean isAwaitingSearch(java.util.UUID playerId) {
+        return awaitingSearch.containsKey(playerId);
+    }
+
+    public String consumeSearchCurrency(java.util.UUID playerId) {
+        return awaitingSearch.remove(playerId);
     }
 
     private void handleBuyCurrencyButtonClick(Player player) {
@@ -539,6 +552,10 @@ public class ShopGUI implements Listener {
     }
 
     private void handleLotteryButtonClick(Player player) {
+        if (!player.hasPermission("win9xshopandpay.lottery")) {
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("no-permission", player));
+            return;
+        }
         player.closeInventory();
         plugin.getLotteryGUI().openLottery(player);
     }
@@ -560,26 +577,23 @@ public class ShopGUI implements Listener {
         return ip;
     }
 
-    private String extractCurrencyIdFromTitle(String title) {
-        title = title.replace("§", "");
-        for (Currency currency : currencyManager.getAllCurrencies().values()) {
-            if (title.contains(currency.getName()) || title.contains(currency.getSymbol())) {
-                return currency.getId();
+    private void giveItemSafely(Player player, ItemStack item) {
+        java.util.Map<Integer, ItemStack> overflow = player.getInventory().addItem(item);
+        if (!overflow.isEmpty()) {
+            for (ItemStack drop : overflow.values()) {
+                player.getWorld().dropItem(player.getLocation(), drop);
             }
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("shop-inventory-full-dropped", player));
         }
-        Currency defaultCurrency = currencyManager.getDefaultCurrency();
-        return defaultCurrency != null ? defaultCurrency.getId() : "coins";
     }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        
-        Player player = (Player) event.getWhoClicked();
-        String playerId = player.getUniqueId().toString();
-        
-        if (!playerCurrencyPages.containsKey(playerId)) return;
-        
+
+        Inventory topInventory = event.getView().getTopInventory();
+        if (!(topInventory.getHolder() instanceof ShopInventoryHolder)) return;
+
         event.setCancelled(true);
     }
 }

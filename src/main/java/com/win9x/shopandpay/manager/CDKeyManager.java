@@ -117,7 +117,8 @@ public class CDKeyManager {
         SUCCESS,
         NOT_FOUND,
         EXPIRED,
-        ALREADY_USED
+        ALREADY_USED,
+        INVENTORY_FULL
     }
 
     public RedeemResult redeemCDKey(String key, org.bukkit.entity.Player player) {
@@ -135,12 +136,35 @@ public class CDKeyManager {
             return RedeemResult.ALREADY_USED;
         }
 
-        if (cdKey.use(playerId)) {
-            player.getInventory().addItem(cdKey.getItem());
-            saveCDKeys();
-            return RedeemResult.SUCCESS;
+        if (!cdKey.use(playerId)) {
+            return RedeemResult.ALREADY_USED;
         }
-        return RedeemResult.ALREADY_USED;
+
+        if (!canFit(player, cdKey.getItem())) {
+            cdKey.rollbackUse(playerId);
+            return RedeemResult.INVENTORY_FULL;
+        }
+
+        player.getInventory().addItem(cdKey.getItem().clone());
+        saveCDKeys();
+        return RedeemResult.SUCCESS;
+    }
+
+    private boolean canFit(org.bukkit.entity.Player player, ItemStack item) {
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        int remaining = item.getAmount();
+        int max = Math.max(1, item.getMaxStackSize());
+        for (ItemStack slot : contents) {
+            if (slot == null || slot.getType() == org.bukkit.Material.AIR) {
+                remaining -= max;
+            } else if (slot.isSimilar(item)) {
+                remaining -= (max - slot.getAmount());
+            }
+            if (remaining <= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean deleteCDKey(String key) {

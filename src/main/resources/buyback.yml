@@ -1,0 +1,29 @@
+# ================================================
+# Win9xShopAndPay - 系统收购价格表
+# ================================================
+# 物品按 Material 名称配置，价格为「单个物品」的收购价。
+# 未在此处列出的物品：若 config.yml 中 buyback.only-configured 为 true 则不收购，
+# 否则按 config.yml 的 buyback.default-price 收购。
+#
+# GitHub仓库: https://github.com/Win9x9xME/Win9xShopAndPay
+# ================================================
+
+prices:
+  COBBLESTONE: 0.5
+  DIRT: 0.2
+  GRAVEL: 0.5
+  SAND: 0.3
+  COAL: 2.0
+  IRON_INGOT: 4.0
+  GOLD_INGOT: 8.0
+  DIAMOND: 50.0
+  EMERALD: 60.0
+  NETHERITE_INGOT: 200.0
+  ROTTEN_FLESH: 0.5
+  BONE: 1.0
+  STRING: 1.0
+  SPIDER_EYE: 2.0
+  GUNPOWDER: 3.0
+  ENDER_PEARL: 10.0
+  SUGAR_CANE: 0.5
+  WHEAT: 1.0

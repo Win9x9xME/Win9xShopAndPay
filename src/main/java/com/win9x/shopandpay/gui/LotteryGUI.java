@@ -30,6 +30,7 @@ public class LotteryGUI implements Listener {
 
     private final Win9xShopAndPay plugin;
     private final LotteryManager lotteryManager;
+    private final com.win9x.shopandpay.manager.LanguageManager languageManager;
     
     private final NamespacedKey lotteryDrawKey;
     private final NamespacedKey lotteryCloseKey;
@@ -47,12 +48,15 @@ public class LotteryGUI implements Listener {
     public LotteryGUI(Win9xShopAndPay plugin) {
         this.plugin = plugin;
         this.lotteryManager = plugin.getLotteryManager();
+        this.languageManager = plugin.getLanguageManager();
         this.lotteryDrawKey = new NamespacedKey(plugin, "lottery_draw");
         this.lotteryCloseKey = new NamespacedKey(plugin, "lottery_close");
     }
 
     public void openLottery(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, INVENTORY_SIZE, "§6抽奖机");
+        LotteryInventoryHolder holder = new LotteryInventoryHolder();
+        Inventory inventory = Bukkit.createInventory(holder, INVENTORY_SIZE, "§6抽奖机");
+        holder.setInventory(inventory);
         
         fillBorder(inventory);
         updateDisplaySlots(inventory);
@@ -138,24 +142,31 @@ public class LotteryGUI implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        if (!"§6抽奖机".equals(event.getView().getTitle())) return;
-        
+
+        Inventory topInventory = event.getView().getTopInventory();
+        if (!(topInventory.getHolder() instanceof LotteryInventoryHolder)) return;
+
         event.setCancelled(true);
-        
+
         Player player = (Player) event.getWhoClicked();
+
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(topInventory)) {
+            return;
+        }
+
         int slot = event.getSlot();
-        
+
         if (slot < 0 || slot >= INVENTORY_SIZE) return;
-        
+
         ItemStack clickedItem = event.getCurrentItem();
-        
+
         if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-        
+
         ItemMeta meta = clickedItem.getItemMeta();
         if (meta == null) return;
-        
+
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        
+
         if (pdc.has(lotteryDrawKey, PersistentDataType.BOOLEAN)) {
             handleDrawClick(player);
         } else if (pdc.has(lotteryCloseKey, PersistentDataType.BOOLEAN)) {
@@ -166,47 +177,56 @@ public class LotteryGUI implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player)) return;
-        if (!"§6抽奖机".equals(event.getView().getTitle())) return;
-        
+        if (!(event.getInventory().getHolder() instanceof LotteryInventoryHolder)) return;
+
         Player player = (Player) event.getPlayer();
         spinningPlayers.remove(player.getUniqueId());
     }
 
     private void handleDrawClick(Player player) {
         UUID playerId = player.getUniqueId();
-        
+
         long now = System.currentTimeMillis();
         Long lastDraw = drawCooldowns.get(playerId);
         if (lastDraw != null && now - lastDraw < getDrawCooldownMs()) {
             return;
         }
-        
+
         AtomicBoolean spinning = spinningPlayers.computeIfAbsent(playerId, k -> new AtomicBoolean(false));
         if (!spinning.compareAndSet(false, true)) {
-            ColorCodeConverter.sendMessage(player, "lottery-spinning");
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("lottery-spinning", player));
             return;
         }
-        
-        try {
-            if (!lotteryManager.canAfford(player)) {
-                ColorCodeConverter.sendMessage(player, "lottery-not-enough-currency");
-                return;
-            }
-            
-            boolean success = lotteryManager.deductCost(player);
-            if (!success) {
-                ColorCodeConverter.sendMessage(player, "lottery-failed-deduct");
-                return;
-            }
-            
-            drawCooldowns.put(playerId, now);
-            
-            LotteryPrize winningPrize = lotteryManager.drawPrize();
-            
-            animateSpin(player, winningPrize);
-        } finally {
-            spinning.compareAndSet(true, false);
+
+        if (lotteryManager.getPrizes().isEmpty()) {
+            spinning.set(false);
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("lottery-no-prizes", player));
+            return;
         }
+
+        if (!lotteryManager.canAfford(player)) {
+            spinning.set(false);
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("lottery-not-enough-currency", player));
+            return;
+        }
+
+        if (!lotteryManager.deductCost(player)) {
+            spinning.set(false);
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("lottery-failed-deduct", player));
+            return;
+        }
+
+        drawCooldowns.put(playerId, now);
+
+        LotteryPrize winningPrize = lotteryManager.drawPrize();
+        if (winningPrize == null) {
+            plugin.getCurrencyManager().deposit(player, lotteryManager.getCostCurrencyId(), lotteryManager.getCostAmount());
+            spinning.set(false);
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("lottery-refunded", player));
+            return;
+        }
+
+        animateSpin(player, winningPrize);
     }
 
     private void animateSpin(Player player, LotteryPrize winningPrize) {
@@ -266,6 +286,7 @@ public class LotteryGUI implements Listener {
     }
 
     private void showResult(Player player, LotteryPrize winningPrize) {
+        spinningPlayers.remove(player.getUniqueId());
         Inventory inventory = player.getOpenInventory().getTopInventory();
         if (inventory == null) return;
         

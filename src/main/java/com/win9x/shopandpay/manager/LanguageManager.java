@@ -21,7 +21,10 @@ public class LanguageManager {
     private String defaultLanguage = "zh-CN";
 
     private static final String[] SUPPORTED_LANGUAGES = {
-        "zh-CN", "zh-TW", "en-US", "en-GB", "ja-JP", "ko-KR"
+        "zh-CN", "zh-TW", "en-US", "en-GB", "ja-JP", "ko-KR",
+        "fr-FR", "de-DE", "es-ES", "ru-RU",
+        "it-IT", "pt-BR", "pt-PT", "nl-NL", "pl-PL", "tr-TR",
+        "uk-UA", "cs-CZ", "vi-VN", "id-ID"
     };
 
     public LanguageManager(Win9xShopAndPay plugin) {
@@ -148,8 +151,37 @@ public class LanguageManager {
                 return "en-GB";
             }
             return "en-US";
+        } else if (locale.startsWith("fr")) {
+            return "fr-FR";
+        } else if (locale.startsWith("de")) {
+            return "de-DE";
+        } else if (locale.startsWith("es")) {
+            return "es-ES";
+        } else if (locale.startsWith("ru")) {
+            return "ru-RU";
+        } else if (locale.startsWith("it")) {
+            return "it-IT";
+        } else if (locale.startsWith("pt")) {
+            if (locale.equals("pt_BR")) {
+                return "pt-BR";
+            }
+            return "pt-PT";
+        } else if (locale.startsWith("nl")) {
+            return "nl-NL";
+        } else if (locale.startsWith("pl")) {
+            return "pl-PL";
+        } else if (locale.startsWith("tr")) {
+            return "tr-TR";
+        } else if (locale.startsWith("uk")) {
+            return "uk-UA";
+        } else if (locale.startsWith("cs")) {
+            return "cs-CZ";
+        } else if (locale.startsWith("vi")) {
+            return "vi-VN";
+        } else if (locale.startsWith("id")) {
+            return "id-ID";
         }
-        
+
         return defaultLanguage;
     }
 

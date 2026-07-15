@@ -46,14 +46,22 @@ public class ShopItemListener implements Listener {
         }
 
         PersistentDataContainer container = meta.getPersistentDataContainer();
-        if (!container.has(shopCompassKey, PersistentDataType.BOOLEAN) || 
+        if (!container.has(shopCompassKey, PersistentDataType.BOOLEAN) ||
             !container.get(shopCompassKey, PersistentDataType.BOOLEAN)) {
             return;
         }
 
+        if (!player.hasPermission("win9xshopandpay.shop")) {
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("no-permission", player));
+            return;
+        }
+
         event.setCancelled(true);
-        
-        ShopGUI shopGUI = new ShopGUI(plugin);
+
+        ShopGUI shopGUI = plugin.getShopGUI();
+        if (shopGUI == null) {
+            return;
+        }
         shopGUI.openShop(player, currencyManager.getDefaultCurrency().getId());
     }
 

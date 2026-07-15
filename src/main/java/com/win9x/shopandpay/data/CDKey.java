@@ -82,7 +82,21 @@ public class CDKey {
         if (!usedByPlayers.add(playerId)) {
             return false;
         }
-        uses.incrementAndGet();
-        return true;
+        while (true) {
+            int current = uses.get();
+            if (current >= maxUses) {
+                usedByPlayers.remove(playerId);
+                return false;
+            }
+            if (uses.compareAndSet(current, current + 1)) {
+                return true;
+            }
+        }
+    }
+
+    public void rollbackUse(String playerId) {
+        if (usedByPlayers.remove(playerId)) {
+            uses.decrementAndGet();
+        }
     }
 }

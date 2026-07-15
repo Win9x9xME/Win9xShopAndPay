@@ -10,9 +10,11 @@ import java.util.logging.LogRecord;
 public class DebugLoggerHandler extends Handler {
 
     private final Win9xShopAndPay plugin;
+    private final String pluginLoggerName;
 
     public DebugLoggerHandler(Win9xShopAndPay plugin) {
         this.plugin = plugin;
+        this.pluginLoggerName = plugin.getName();
     }
 
     @Override
@@ -21,8 +23,13 @@ public class DebugLoggerHandler extends Handler {
             return;
         }
 
+        String loggerName = record.getLoggerName();
+        if (loggerName == null || !loggerName.equals(pluginLoggerName)) {
+            return;
+        }
+
         String message = format(record);
-        
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.isOp()) {
                 player.sendMessage("§7[DEBUG] §f" + message);

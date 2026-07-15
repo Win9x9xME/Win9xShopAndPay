@@ -1,8 +1,8 @@
 name: Win9xShopAndPay
 main: com.win9x.shopandpay.Win9xShopAndPay
-version: 1.0.0-SNAPSHOT-beta7
-api-version: 1.20
-description: 一个拥有图形化购买界面和CDKey系统的商店插件，支持多币种和Vault经济系统
+version: 1.0.1-RELEASE
+api-version: '1.21'
+description: 一个拥有图形化购买界面、CDKey系统、自由市场、拍卖行、系统收购与AI助手的商店插件，支持多币种和Vault经济系统
 author: Win9x
 depend: [Vault]
 
@@ -52,4 +52,25 @@ permissions:
     default: true
   win9xshopandpay.lottery:
     description: 使用抽奖机的权限
+    default: true
+  win9xshopandpay.market.use:
+    description: 使用自由市场/拍卖行的权限
+    default: true
+  win9xshopandpay.market.sell:
+    description: 在自由市场上架物品的权限
+    default: true
+  win9xshopandpay.buyback:
+    description: 使用系统收购的权限
+    default: true
+  win9xshopandpay.ai:
+    description: 使用AI助手聊天的权限
+    default: true
+  win9xshopandpay.loan:
+    description: 使用贷款功能的权限
+    default: true
+  win9xshopandpay.ticket:
+    description: 使用彩票功能的权限
+    default: true
+  win9xshopandpay.bank:
+    description: 使用银行功能的权限
     default: true

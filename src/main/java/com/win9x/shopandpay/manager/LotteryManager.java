@@ -152,9 +152,12 @@ public class LotteryManager {
         if (prize == null) {
             return false;
         }
-        
+
         ItemStack item = prize.getItem().clone();
-        player.getInventory().addItem(item);
+        java.util.Map<Integer, ItemStack> overflow = player.getInventory().addItem(item);
+        for (ItemStack drop : overflow.values()) {
+            player.getWorld().dropItem(player.getLocation(), drop);
+        }
         return true;
     }
 

@@ -38,6 +38,15 @@ public class Win9xShopAndPay extends JavaPlugin {
     private LanguageManager languageManager;
     private LotteryManager lotteryManager;
     private LotteryGUI lotteryGUI;
+    private ShopGUI shopGUI;
+    private com.win9x.shopandpay.gui.MarketGUI marketGUI;
+    private com.win9x.shopandpay.gui.BuybackGUI buybackGUI;
+    private com.win9x.shopandpay.manager.AiManager aiManager;
+    private com.win9x.shopandpay.manager.MarketManager marketManager;
+    private com.win9x.shopandpay.manager.BuybackManager buybackManager;
+    private com.win9x.shopandpay.manager.LoanManager loanManager;
+    private com.win9x.shopandpay.manager.LotteryTicketManager lotteryTicketManager;
+    private com.win9x.shopandpay.manager.BankManager bankManager;
     private EasterEggManager easterEggManager;
     private BukkitAudiences bukkitAudiences;
     private SimpleHttpServer httpServer;
@@ -61,9 +70,16 @@ public class Win9xShopAndPay extends JavaPlugin {
         languageManager = new LanguageManager(this);
         lotteryManager = new LotteryManager(this);
         easterEggManager = new EasterEggManager(this);
-        
+        marketManager = new com.win9x.shopandpay.manager.MarketManager(this);
+        buybackManager = new com.win9x.shopandpay.manager.BuybackManager(this);
+        aiManager = new com.win9x.shopandpay.manager.AiManager(this);
+        loanManager = new com.win9x.shopandpay.manager.LoanManager(this);
+        lotteryTicketManager = new com.win9x.shopandpay.manager.LotteryTicketManager(this);
+        bankManager = new com.win9x.shopandpay.manager.BankManager(this);
+
         registerCommands();
         registerEvents();
+        startSchedulers();
         
         generateDefaultBuyCurrencyHtml();
         
@@ -154,6 +170,34 @@ public class Win9xShopAndPay extends JavaPlugin {
         }
     }
 
+    private void startSchedulers() {
+        // Run periodic system tasks every 5 minutes (6000 ticks).
+        long intervalTicks = 20L * 60L * 5L;
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            try {
+                if (loanManager != null) {
+                    loanManager.tickOverdue();
+                }
+            } catch (Throwable t) {
+                getLogger().warning("Loan tick failed: " + t.getMessage());
+            }
+            try {
+                if (lotteryTicketManager != null) {
+                    lotteryTicketManager.tick();
+                }
+            } catch (Throwable t) {
+                getLogger().warning("Lottery ticket tick failed: " + t.getMessage());
+            }
+            try {
+                if (bankManager != null) {
+                    bankManager.tick();
+                }
+            } catch (Throwable t) {
+                getLogger().warning("Bank tick failed: " + t.getMessage());
+            }
+        }, intervalTicks, intervalTicks);
+    }
+
     @Override
     public void onDisable() {
         if (cdKeyManager != null) {
@@ -161,6 +205,18 @@ public class Win9xShopAndPay extends JavaPlugin {
         }
         if (currencyManager != null) {
             currencyManager.savePlayerBalances();
+        }
+        if (marketManager != null) {
+            marketManager.save();
+        }
+        if (loanManager != null) {
+            loanManager.save();
+        }
+        if (lotteryTicketManager != null) {
+            lotteryTicketManager.save();
+        }
+        if (bankManager != null) {
+            bankManager.save();
         }
         if (httpServer != null) {
             httpServer.stop();
@@ -198,10 +254,16 @@ public class Win9xShopAndPay extends JavaPlugin {
 
     private void registerEvents() {
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new ShopGUI(this), this);
+        shopGUI = new ShopGUI(this);
+        pm.registerEvents(shopGUI, this);
         pm.registerEvents(new ShopItemListener(this), this);
         pm.registerEvents(new PlayerJoinListener(this), this);
         pm.registerEvents(new EasterEggListener(easterEggManager), this);
+        marketGUI = new com.win9x.shopandpay.gui.MarketGUI(this);
+        pm.registerEvents(marketGUI, this);
+        buybackGUI = new com.win9x.shopandpay.gui.BuybackGUI(this);
+        pm.registerEvents(buybackGUI, this);
+        pm.registerEvents(new com.win9x.shopandpay.listener.ChatListener(this), this);
         lotteryGUI = new LotteryGUI(this);
         pm.registerEvents(lotteryGUI, this);
     }
@@ -248,5 +310,41 @@ public class Win9xShopAndPay extends JavaPlugin {
     
     public EasterEggManager getEasterEggManager() {
         return easterEggManager;
+    }
+
+    public ShopGUI getShopGUI() {
+        return shopGUI;
+    }
+
+    public com.win9x.shopandpay.manager.AiManager getAiManager() {
+        return aiManager;
+    }
+
+    public com.win9x.shopandpay.manager.MarketManager getMarketManager() {
+        return marketManager;
+    }
+
+    public com.win9x.shopandpay.manager.BuybackManager getBuybackManager() {
+        return buybackManager;
+    }
+
+    public com.win9x.shopandpay.gui.MarketGUI getMarketGUI() {
+        return marketGUI;
+    }
+
+    public com.win9x.shopandpay.gui.BuybackGUI getBuybackGUI() {
+        return buybackGUI;
+    }
+
+    public com.win9x.shopandpay.manager.LoanManager getLoanManager() {
+        return loanManager;
+    }
+
+    public com.win9x.shopandpay.manager.LotteryTicketManager getLotteryTicketManager() {
+        return lotteryTicketManager;
+    }
+
+    public com.win9x.shopandpay.manager.BankManager getBankManager() {
+        return bankManager;
     }
 }

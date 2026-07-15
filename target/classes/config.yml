@@ -12,7 +12,10 @@
 # 语言设置
 language:
   # 默认语言，当玩家语言无法识别时使用
-  # 可选值: zh-CN(简体中文), zh-TW(繁体中文), en-US(美式英语), en-GB(英式英语), ja-JP(日语), ko-KR(韩语)
+  # 可选值: zh-CN(简体中文), zh-TW(繁体中文), en-US(美式英语), en-GB(英式英语), ja-JP(日语), ko-KR(韩语),
+  # fr-FR(法语), de-DE(德语), es-ES(西班牙语), ru-RU(俄语), it-IT(意大利语), pt-BR(巴西葡萄牙语),
+  # pt-PT(欧洲葡萄牙语), nl-NL(荷兰语), pl-PL(波兰语), tr-TR(土耳其语), uk-UA(乌克兰语), cs-CZ(捷克语),
+  # vi-VN(越南语), id-ID(印尼语)
   default: "zh-CN"
 
 # 命令设置
@@ -42,7 +45,9 @@ gui:
   # 设置为0表示永不自动关闭（不推荐，会持续占用端口）
   buy-currency-server-timeout: 180
   # 内置HTTP服务器绑定地址（默认127.0.0.1，仅限本地访问）
-  # 设置为0.0.0.0可允许外网访问，但不推荐这样做
+  # 强烈建议保持 127.0.0.1！设置为 0.0.0.0 会让整个互联网都能访问该 HTTP 服务，
+  # 且该服务无任何认证，可能泄露配置文件夹内容或被滥用。如确需外网访问，请用
+  # 反向代理（如 nginx）并自行加认证，不要直接把 0.0.0.0 暴露到公网。
   buy-currency-server-bind-address: "127.0.0.1"
   # 内置HTTP服务器的自定义访问地址（可选）
   # 如果服务器使用域名或代理，可设置此项，例如: "mc.example.com"
@@ -62,4 +67,95 @@ de-bug:
   # 开启后，控制台输出会同时发送到游戏内所有OP玩家的聊天框
   # 仅用于调试目的，生产环境请关闭
   enabled: false
+
+# AI助手设置（由 internalAI02.py 移植）
+ai:
+  # 是否启用AI聊天功能
+  enabled: true
+  # 思知机器人API地址
+  url: "https://api.sizhi.com/bot"
+  # 思知机器人的appid（请替换为你自己的）
+  appid: "9ffcb5785ad9617bf4e64178ac64f7b1"
+  # AI回复的前缀（支持 & 颜色代码）
+  prefix: "&b[AI]&r "
+  # AI回复的后缀（支持 & 颜色代码）
+  suffix: ""
+  # 系统提示词，会拼接到每次玩家发言之前（留空则不拼接）
+  system-prompt: "你是一个友好的Minecraft服务器助手，名叫Win9x助手。请用简洁的中文回答玩家的问题，不要编造规则，遇到不确定的内容请如实说明。"
+  # 每位玩家两次提问之间的冷却时间（秒），防止滥用外部API
+  cooldown-seconds: 3
+
+# 贷款设置
+loan:
+  # 是否启用贷款功能
+  enabled: true
+  # 贷款使用的币种id
+  currency-id: "coins"
+  # 利率（每期，0.1 = 10%），到期应还 = 本金 * (1 + 利率)
+  interest-rate: 0.1
+  # 贷款期限（天）
+  term-days: 7
+  # 单笔最大贷款金额
+  max-amount: 10000.0
+  # 每个玩家同时持有的最大活跃贷款数
+  max-active-loans: 3
+
+# 彩票设置（与抽奖机 lottery 不同，这是周期性开奖的彩票）
+lottery-ticket:
+  # 是否启用彩票
+  enabled: true
+  # 彩票使用的币种id
+  currency-id: "coins"
+  # 每 c 天开放一期并开奖上一期
+  cycle-days: 1
+  # 每次购买最低金额
+  min-amount: 1.0
+  # 中奖者获得的奖池比例（0.0~1.0，剩余为系统抽水）
+  payout-ratio: 0.9
+  # 保留多少期历史记录
+  history-kept: 20
+
+# 银行设置
+bank:
+  # 是否启用银行
+  enabled: true
+  # 银行使用的币种id
+  currency-id: "coins"
+  # 活期利率（每个计息周期，0.001 = 0.1%）
+  demand-rate: 0.001
+  # 计息周期（小时），每隔该时长结算一次活期利息
+  period-hours: 24
+  # 定期提前支取是否没收全部利息
+  fixed-early-withdraw-penalty: true
+  # 定期档位：键为天数，值为该档利率（0.05 = 5%，到期一次性给付）
+  fixed-terms:
+    7: 0.03
+    30: 0.08
+    90: 0.20
+
+
+# 自由市场 / 拍卖行设置
+market:
+  # 上架手续费（按币种id配置，固定金额；玩家上架时扣除）
+  list-fee:
+    coins: 10.0
+  # 下架是否退还手续费
+  refund-fee-on-delist: false
+  # 单个玩家最大在架商品数
+  max-listings-per-player: 20
+  # 上架物品堆叠数量上限
+  max-list-amount: 64
+  # 市场使用的币种id
+  currency-id: "coins"
+
+# 系统收购设置
+buyback:
+  # 是否启用系统收购
+  enabled: true
+  # 收购使用的币种id
+  currency-id: "coins"
+  # 默认收购单价（当buyback.yml未单独配置某物品时使用）
+  default-price: 1.0
+  # 一键回收是否只能回收配置表中的物品（false则未配置物品按default-price收购）
+  only-configured: false
 

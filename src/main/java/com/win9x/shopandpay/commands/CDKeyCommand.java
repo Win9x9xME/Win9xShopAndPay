@@ -55,12 +55,18 @@ public class CDKeyCommand implements CommandExecutor {
             return true;
         }
 
+        Player player = (Player) sender;
+
+        if (!player.hasPermission("win9xshopandpay.cdkey.redeem")) {
+            sendMessage(player, "no-permission");
+            return true;
+        }
+
         if (args.length < 2) {
             sendMessage(sender, "error-usage-redeem-cdkey");
             return true;
         }
 
-        Player player = (Player) sender;
         String key = args[1].toUpperCase();
 
         CDKeyManager.RedeemResult result = cdKeyManager.redeemCDKey(key, player);
@@ -72,6 +78,9 @@ public class CDKeyCommand implements CommandExecutor {
             return true;
         } else if (result == CDKeyManager.RedeemResult.ALREADY_USED) {
             ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-already-used", player));
+            return true;
+        } else if (result == CDKeyManager.RedeemResult.INVENTORY_FULL) {
+            ColorCodeConverter.sendMessage(player, languageManager.getMessageComponent("cdkey-inventory-full", player));
             return true;
         }
 
@@ -99,11 +108,21 @@ public class CDKeyCommand implements CommandExecutor {
             return true;
         }
 
+        if (!material.isItem()) {
+            sendMessage(sender, "error-material-not-item");
+            return true;
+        }
+
         int amount;
         try {
             amount = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
             sendMessage(sender, "error-invalid-number");
+            return true;
+        }
+
+        if (amount < 1 || amount > material.getMaxStackSize()) {
+            sendMessage(sender, "error-amount-range", material.getMaxStackSize());
             return true;
         }
 
@@ -115,6 +134,11 @@ public class CDKeyCommand implements CommandExecutor {
                 sendMessage(sender, "error-invalid-max-uses");
                 return true;
             }
+        }
+
+        if (maxUses < 1 || maxUses > 100000) {
+            sendMessage(sender, "error-max-uses-range");
+            return true;
         }
 
         ItemStack item = new ItemStack(material, amount);

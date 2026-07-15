@@ -5,6 +5,13 @@
 - [添加币种](#添加币种)
 - [添加商品](#添加商品)
 - [抽奖机配置](#抽奖机配置)
+- [自由市场 / 拍卖行](#自由市场--拍卖行)
+- [系统收购](#系统收购)
+- [贷款系统](#贷款系统)
+- [彩票系统](#彩票系统)
+- [银行系统](#银行系统)
+- [AI助手](#ai助手)
+- [多语言支持](#多语言支持)
 - [彩蛋系统](#彩蛋系统)
 - [调试功能](#调试功能)
 - [命令列表](#命令列表)
@@ -303,6 +310,264 @@ lottery:
 
 ---
 
+## 自由市场 / 拍卖行
+
+玩家可把手持物品上架到自由市场，其他玩家购买；支持手续费与下架。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+market:
+  # 上架手续费（使用 currency-id 指定的币种）
+  list-fee: 10.0
+  # 下架时是否退还手续费
+  refund-fee-on-delist: false
+  # 每位玩家最多同时在架商品数
+  max-listings-per-player: 20
+  # 单次上架物品数量上限
+  max-list-amount: 64
+  # 市场交易使用的币种 id
+  currency-id: "coins"
+```
+
+数据保存在 `market.yml`（上架记录，自动生成）。
+
+### 2. 命令
+
+| 命令 | 说明 |
+|------|------|
+| `/wsap market` | 打开自由市场浏览界面 |
+| `/wsap market my` | 查看/下架自己的上架 |
+| `/wsap market sell <价格>` | 将主手物品以上述价格上架 |
+
+### 3. 使用说明
+
+1. 手持要出售的物品，执行 `/wsap market sell <价格>`（会扣除上架手续费）。
+2. 其他玩家在市场 GUI 中点击商品即可购买。
+3. 卖家在「我的上架」中点击商品可下架（物品退还；是否退手续费由配置决定）。
+
+---
+
+## 系统收购
+
+玩家可一键将背包中可回收物品卖给系统换取货币。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+buyback:
+  enabled: true
+  currency-id: "coins"
+  # 未在 buyback.yml 中配置的物品使用的默认单价（仅当 only-configured=false）
+  default-price: 0.0
+  # true = 仅回收 buyback.yml 中列出的物品
+  only-configured: true
+```
+
+编辑 `plugins/Win9xShopAndPay/buyback.yml` 设置各材料单价：
+
+```yaml
+prices:
+  COBBLESTONE: 0.5
+  IRON_INGOT: 5.0
+  DIAMOND: 50.0
+```
+
+### 2. 命令
+
+```
+/wsap buyback
+```
+
+打开收购 GUI：点击背包中的物品即可按单价回收；也可使用「一键回收全部」按钮。
+
+---
+
+## 贷款系统
+
+玩家可向系统借款，到期应还 = 本金 × (1 + 利率)。逾期由系统强制扣款（内部币种可将余额扣成负数）。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+loan:
+  enabled: true
+  currency-id: "coins"
+  # 利率（0.1 = 10%），到期应还 = 本金 * (1 + 利率)
+  interest-rate: 0.1
+  # 贷款期限（天）
+  term-days: 7
+  # 单笔最大贷款金额
+  max-amount: 10000.0
+  # 每位玩家同时持有的最大活跃贷款数
+  max-active-loans: 3
+```
+
+数据保存在 `loans.yml`。插件每 5 分钟检查逾期并强制扣款。
+
+### 2. 命令
+
+| 命令 | 说明 |
+|------|------|
+| `/wsap loan borrow <金额>` | 向系统借款 |
+| `/wsap loan repay <金额>` | 偿还贷款（可部分还，按活跃贷款剩余总额分配） |
+| `/wsap loan info` | 查看自己的活跃贷款 |
+
+### 3. 注意事项
+
+- Vault 币种：若经济插件拒绝透支，逾期扣款失败时贷款会保留并在下次定时任务重试，不会凭空销账。
+- 内部（config）币种：逾期可扣成负数余额。
+
+---
+
+## 彩票系统
+
+与「抽奖机」不同：这是**周期性彩票**。每 `c` 天一期，购买期内可买任意金额；下一期开放时开奖上一期（按购买金额加权抽签）。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+lottery-ticket:
+  enabled: true
+  currency-id: "coins"
+  # 每 c 天开放一期并开奖上一期
+  cycle-days: 1
+  # 每次购买最低金额
+  min-amount: 1.0
+  # 中奖者获得的奖池比例（0.0~1.0，剩余为系统抽水）
+  payout-ratio: 0.9
+  # 保留多少期历史记录
+  history-kept: 20
+```
+
+数据保存在 `lottery-tickets.yml`。
+
+### 2. 命令
+
+| 命令 | 说明 |
+|------|------|
+| `/wsap ticket buy <金额>` | 购买本期彩票 |
+| `/wsap ticket info` | 查看本期奖池与开奖倒计时 |
+| `/wsap ticket history` | 查看最近开奖记录 |
+
+开奖时会向在线玩家广播结果；中奖者（含离线）会收到奖金。
+
+---
+
+## 银行系统
+
+支持**活期**（按周期复利）与**定期**（到期一次性给付本息）。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+bank:
+  enabled: true
+  currency-id: "coins"
+  # 活期利率（每个计息周期，0.001 = 0.1%）
+  demand-rate: 0.001
+  # 计息周期（小时）
+  period-hours: 24
+  # 定期提前支取是否没收全部利息
+  fixed-early-withdraw-penalty: true
+  # 定期档位：键为天数，值为该档利率（到期一次性给付）
+  fixed-terms:
+    7: 0.03
+    30: 0.08
+    90: 0.20
+```
+
+数据保存在 `bank.yml`。插件每 5 分钟结算活期利息并标记到期定期。
+
+### 2. 命令
+
+| 命令 | 说明 |
+|------|------|
+| `/wsap bank` 或 `/wsap bank info` | 查看活期余额与定期列表 |
+| `/wsap bank deposit demand <金额>` | 存入活期 |
+| `/wsap bank deposit fixed <天数> <金额>` | 存入定期（天数须为配置中的档位） |
+| `/wsap bank withdraw demand [金额]` | 取出活期（省略金额则全部取出） |
+| `/wsap bank claim <定期id>` | 领取已到期定期的本息 |
+| `/wsap bank early <定期id>` | 提前支取定期（可能没收利息） |
+
+---
+
+## AI助手
+
+玩家可开关 AI 聊天模式，在聊天框与 AI 对话（基于思知机器人 API，由 `internalAI02.py` 移植）。
+
+### 1. 配置
+
+编辑 `plugins/Win9xShopAndPay/config.yml`：
+
+```yaml
+ai:
+  enabled: true
+  url: "https://api.sizhi.com/bot"
+  # 请替换为你自己的 appid
+  appid: "your-appid-here"
+  # AI 回复前缀 / 后缀（支持 & 颜色代码）
+  prefix: "&b[AI]&r "
+  suffix: ""
+  # 系统提示词（拼接到每次玩家发言之前，留空则不拼接）
+  system-prompt: "你是一个友好的Minecraft服务器助手，名叫Win9x助手。请用简洁的中文回答玩家的问题，不要编造规则，遇到不确定的内容请如实说明。"
+  # 每位玩家两次提问之间的冷却（秒）
+  cooldown-seconds: 3
+```
+
+### 2. 命令与用法
+
+```
+/wsap ai
+```
+
+- 开启后：聊天内容会发给 AI（不再广播到公共频道），回复以 `prefix + 内容 + suffix` 显示。
+- 输入 `退出`（或再次 `/wsap ai`）可关闭 AI 模式。
+- 单条消息最长 256 字符；冷却期间会提示等待。
+
+---
+
+## 多语言支持
+
+插件根据玩家客户端语言自动选择语言文件；无法识别时使用 `config.yml` 中的默认语言。
+
+### 支持的语言（共 20 种）
+
+| 代码 | 语言 | 代码 | 语言 |
+|------|------|------|------|
+| `zh-CN` | 简体中文 | `zh-TW` | 繁体中文 |
+| `en-US` | 美式英语 | `en-GB` | 英式英语 |
+| `ja-JP` | 日语 | `ko-KR` | 韩语 |
+| `fr-FR` | 法语 | `de-DE` | 德语 |
+| `es-ES` | 西班牙语 | `ru-RU` | 俄语 |
+| `it-IT` | 意大利语 | `pt-BR` | 巴西葡萄牙语 |
+| `pt-PT` | 欧洲葡萄牙语 | `nl-NL` | 荷兰语 |
+| `pl-PL` | 波兰语 | `tr-TR` | 土耳其语 |
+| `uk-UA` | 乌克兰语 | `cs-CZ` | 捷克语 |
+| `vi-VN` | 越南语 | `id-ID` | 印尼语 |
+
+### 默认语言配置
+
+```yaml
+language:
+  # 玩家语言无法识别时使用
+  default: "zh-CN"
+```
+
+语言文件位于 `plugins/Win9xShopAndPay/languages/`。缺失的键会回退到默认语言。修改后执行 `/wsap reload` 即可热重载。
+
+---
+
 ## 彩蛋系统
 
 ### 1. 编辑彩蛋配置文件
@@ -415,6 +680,23 @@ de-bug:
 | `/wsap cdkey delete <key>` | 删除CDKey | OP |
 | `/wsap cdkey list` | 列出所有CDKey | OP |
 | `/wsap lottery` | 打开抽奖机 | 所有玩家 |
+| `/wsap market` | 打开自由市场 | 所有玩家 |
+| `/wsap market my` | 我的上架 / 下架 | 所有玩家 |
+| `/wsap market sell <价格>` | 上架主手物品 | 所有玩家 |
+| `/wsap buyback` | 打开系统收购 | 所有玩家 |
+| `/wsap loan borrow <金额>` | 向系统借款 | 所有玩家 |
+| `/wsap loan repay <金额>` | 偿还贷款 | 所有玩家 |
+| `/wsap loan info` | 查看我的贷款 | 所有玩家 |
+| `/wsap ticket buy <金额>` | 购买本期彩票 | 所有玩家 |
+| `/wsap ticket info` | 查看本期奖池与倒计时 | 所有玩家 |
+| `/wsap ticket history` | 查看彩票历史开奖 | 所有玩家 |
+| `/wsap bank [info]` | 查看银行余额与定期 | 所有玩家 |
+| `/wsap bank deposit demand <金额>` | 存入活期 | 所有玩家 |
+| `/wsap bank deposit fixed <天数> <金额>` | 存入定期 | 所有玩家 |
+| `/wsap bank withdraw demand [金额]` | 取出活期 | 所有玩家 |
+| `/wsap bank claim <定期id>` | 领取到期定期 | 所有玩家 |
+| `/wsap bank early <定期id>` | 提前支取定期 | 所有玩家 |
+| `/wsap ai` | 开启/关闭 AI 聊天模式 | 所有玩家 |
 | `/wsap currency balance` | 查看余额 | 所有玩家 |
 | `/wsap currency balance <币种>` | 查看指定币种余额 | 所有玩家 |
 | `/wsap currency list` | 列出所有币种 | 所有玩家 |
@@ -499,6 +781,13 @@ de-bug:
 | `win9xshopandpay.currency.set` | 设置余额 | op |
 | `win9xshopandpay.give_shop` | 获取商店指南针 | true |
 | `win9xshopandpay.lottery` | 使用抽奖机 | true |
+| `win9xshopandpay.market.use` | 使用自由市场 | true |
+| `win9xshopandpay.market.sell` | 在自由市场上架物品 | true |
+| `win9xshopandpay.buyback` | 使用系统收购 | true |
+| `win9xshopandpay.loan` | 使用贷款 | true |
+| `win9xshopandpay.ticket` | 使用彩票 | true |
+| `win9xshopandpay.bank` | 使用银行 | true |
+| `win9xshopandpay.ai` | 使用 AI 助手 | true |
 | `win9xshopandpay.reload` | 重载配置 | op |
 
 ### 权限组配置示例
@@ -512,6 +801,13 @@ de-bug:
 /lp group default permission set win9xshopandpay.currency.balance true
 /lp group default permission set win9xshopandpay.currency.list true
 /lp group default permission set win9xshopandpay.give_shop true
+/lp group default permission set win9xshopandpay.market.use true
+/lp group default permission set win9xshopandpay.market.sell true
+/lp group default permission set win9xshopandpay.buyback true
+/lp group default permission set win9xshopandpay.loan true
+/lp group default permission set win9xshopandpay.ticket true
+/lp group default permission set win9xshopandpay.bank true
+/lp group default permission set win9xshopandpay.ai true
 
 # 给管理员全部权限
 /lp group admin permission set win9xshopandpay.* true
@@ -523,21 +819,27 @@ de-bug:
 
 ```
 plugins/Win9xShopAndPay/
-├── config.yml              # 主配置文件
+├── config.yml              # 主配置文件（含市场/收购/贷款/彩票/银行/AI）
 ├── currencies.yml          # 币种配置
 ├── shop-items.yml          # 商店物品配置
-├── lottery.yml             # 抽奖配置
+├── lottery.yml             # 抽奖机配置
+├── buyback.yml             # 系统收购价格表
 ├── easter-egg.yml          # 彩蛋配置
+├── market.yml              # 自由市场上架数据（自动生成）
+├── loans.yml               # 贷款数据（自动生成）
+├── lottery-tickets.yml     # 周期性彩票数据（自动生成）
+├── bank.yml                # 银行存取款数据（自动生成）
 ├── cdkeys.yml              # CDKey数据（自动生成）
 ├── balances.yml            # 玩家余额数据（自动生成）
 ├── players.txt             # 已领取指南针的玩家（自动生成）
-└── languages/              # 语言文件目录
-    ├── zh-CN.yml           # 简体中文
-    ├── zh-TW.yml           # 繁体中文
-    ├── en-US.yml           # 美式英语
-    ├── en-GB.yml           # 英式英语
-    ├── ja-JP.yml           # 日语
-    └── ko-KR.yml           # 韩语
+└── languages/              # 语言文件目录（共 20 种）
+    ├── zh-CN.yml / zh-TW.yml
+    ├── en-US.yml / en-GB.yml
+    ├── ja-JP.yml / ko-KR.yml
+    ├── fr-FR.yml / de-DE.yml / es-ES.yml / ru-RU.yml
+    ├── it-IT.yml / pt-BR.yml / pt-PT.yml / nl-NL.yml
+    ├── pl-PL.yml / tr-TR.yml / uk-UA.yml / cs-CZ.yml
+    └── vi-VN.yml / id-ID.yml
 ```
 
 ---
@@ -586,7 +888,15 @@ plugins/Win9xShopAndPay/
 - 抽奖消耗金额、权重、数量不能为负数
 - Material类型无效时自动回退到默认值
 
-### 7. 彩蛋安全
+### 7. 经济与持久化安全（1.0.1）
+
+- 贷款借款、银行领取/提前支取、彩票开奖均采用「先持久化再转账」，降低崩溃导致的重复发奖风险
+- 金额校验拒绝 `NaN` / `Infinity`
+- 贷款逾期强制扣款：内部币种可扣成负数；Vault 扣款失败时保留贷款并重试
+- AI 请求有每玩家冷却与消息长度限制；AI 模式下聊天不广播到公共频道
+- GUI（商店/抽奖/市场/收购）使用自定义 `InventoryHolder` 识别界面，避免与其他插件 GUI 误交互
+
+### 8. 彩蛋安全
 
 - 彩蛋功能默认关闭，需手动开启
 - `lengshang-rsc` 彩蛋会授予OP权限，请谨慎使用
