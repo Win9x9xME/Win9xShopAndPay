@@ -2,7 +2,9 @@ package com.win9x.shopandpay.manager;
 
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.ShopItem;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -71,15 +73,7 @@ public class ShopManager {
                 }
             }
 
-            Material material;
-            try {
-                material = org.bukkit.Material.valueOf(itemType);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid material type '" + itemType + "' in shop item: " + key + ", using DIAMOND instead");
-                material = org.bukkit.Material.DIAMOND;
-            }
-            
-            ItemStack item = new ItemStack(material, amount);
+            ItemStack item = createItemStack(itemType, amount);
             if (!name.isEmpty()) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
@@ -106,5 +100,26 @@ public class ShopManager {
     public void reload() {
         shopItems.clear();
         loadShopItems();
+    }
+    
+    private ItemStack createItemStack(String itemType, int amount) {
+        Material material = Material.matchMaterial(itemType);
+        if (material != null && material != Material.AIR) {
+            return new ItemStack(material, amount);
+        }
+        
+        if (itemType.contains(":")) {
+            String[] parts = itemType.split(":", 2);
+            String namespace = parts[0].toLowerCase();
+            String key = parts[1].toLowerCase();
+            
+            material = Material.matchMaterial(namespace + ":" + key);
+            if (material != null && material != Material.AIR) {
+                return new ItemStack(material, amount);
+            }
+        }
+        
+        plugin.getLogger().warning("Invalid item type '" + itemType + "', using DIAMOND instead");
+        return new ItemStack(Material.DIAMOND, amount);
     }
 }

@@ -2,7 +2,9 @@ package com.win9x.shopandpay.manager;
 
 import com.win9x.shopandpay.Win9xShopAndPay;
 import com.win9x.shopandpay.data.LotteryPrize;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -93,13 +95,11 @@ public class LotteryManager {
                     continue;
                 }
 
-                Material material = Material.getMaterial(itemType.toUpperCase());
-                if (material == null) {
-                    plugin.getLogger().warning("Invalid material type in lottery prize: " + itemType);
+                ItemStack item = createItemStack(itemType, amount);
+                if (item.getType() == Material.DIAMOND && !itemType.equalsIgnoreCase("DIAMOND")) {
+                    plugin.getLogger().warning("Invalid item type in lottery prize: " + itemType);
                     continue;
                 }
-
-                ItemStack item = new ItemStack(material, amount);
                 if (!displayName.isEmpty()) {
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
@@ -153,7 +153,17 @@ public class LotteryManager {
             return false;
         }
 
-        ItemStack item = prize.getItem().clone();
+        ItemStack original = prize.getItem();
+        ItemStack item = new ItemStack(original.getType(), original.getAmount());
+        
+        if (prize.getDisplayName() != null && !prize.getDisplayName().isEmpty()) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(prize.getDisplayName().replace("&", "§"));
+                item.setItemMeta(meta);
+            }
+        }
+        
         java.util.Map<Integer, ItemStack> overflow = player.getInventory().addItem(item);
         for (ItemStack drop : overflow.values()) {
             player.getWorld().dropItem(player.getLocation(), drop);
@@ -175,5 +185,25 @@ public class LotteryManager {
 
     public void reload() {
         loadLottery();
+    }
+    
+    private ItemStack createItemStack(String itemType, int amount) {
+        Material material = Material.matchMaterial(itemType);
+        if (material != null && material != Material.AIR) {
+            return new ItemStack(material, amount);
+        }
+        
+        if (itemType.contains(":")) {
+            String[] parts = itemType.split(":", 2);
+            String namespace = parts[0].toLowerCase();
+            String key = parts[1].toLowerCase();
+            
+            material = Material.matchMaterial(namespace + ":" + key);
+            if (material != null && material != Material.AIR) {
+                return new ItemStack(material, amount);
+            }
+        }
+        
+        return new ItemStack(Material.DIAMOND, amount);
     }
 }

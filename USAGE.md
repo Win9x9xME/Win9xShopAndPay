@@ -715,6 +715,57 @@ de-bug:
 
 点击消息即可将CDKey复制到剪贴板，方便分享给玩家。
 
+### CDKey自定义物品支持
+
+CDKey系统支持使用其他插件注册的自定义物品。
+
+**物品类型格式：**
+
+- **原版物品**：直接使用Material名称，如 `DIAMOND`, `EMERALD`
+- **自定义物品**：使用命名空间格式，如 `myplugin:special_item`
+
+**命令创建示例：**
+
+```
+# 创建原版物品CDKey
+/wsap cdkey create DIAMOND 1 1
+
+# 创建自定义物品CDKey
+/wsap cdkey create myplugin:special_sword 1 1
+```
+
+**配置文件创建示例（cdkeys.yml）：**
+
+```yaml
+cdkeys:
+  # 原版物品
+  DIAMOND_KEY:
+    item-type: DIAMOND
+    amount: 1
+    name: "&b钻石"
+    max-uses: 1
+  
+  # 自定义物品
+  SPECIAL_SWORD_KEY:
+    item-type: myplugin:special_sword
+    amount: 1
+    name: "&c特殊剑"
+    max-uses: 5
+```
+
+**工作原理：**
+
+1. 首先尝试直接匹配物品类型（支持原版物品和自定义物品）
+2. 如果失败且类型包含 `:`，尝试解析为命名空间格式并重新匹配
+3. 使用 `Material.matchMaterial()` 查找物品，该方法会查找所有已注册的物品（包括其他插件注册的自定义物品）
+4. 如果找到则创建对应物品，否则使用DIAMOND作为默认值并输出警告
+
+**注意事项：**
+
+- 自定义物品必须在此插件之前加载的插件中注册
+- 物品类型名称需与插件注册时使用的名称完全一致
+- 如果自定义物品未找到，会自动回退到DIAMOND并输出警告日志
+
 ### 离线玩家支持
 
 管理员现在可以给离线玩家调整币种余额：

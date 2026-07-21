@@ -1,3 +1,26 @@
+# ================================================
+# Win9xShopAndPay - 抽奖配置文件
+# ================================================
+# 
+# 配置项说明:
+# - type: 物品类型
+#   * 原版物品：直接使用Material名称，如DIAMOND, EMERALD
+#   * 自定义物品：使用命名空间格式，如pluginname:itemkey（需该插件已加载）
+# - amount: 物品数量
+# - weight: 权重（越高，中奖概率越大）
+# - display-name: 显示名称（支持颜色代码，用&符号）
+# - rarity: 稀有度（common, uncommon, rare, epic, legendary）
+# 
+# 自定义物品示例:
+# my_custom_prize:
+#   type: myplugin:legendary_item
+#   amount: 1
+#   weight: 1.0
+#   display-name: "&d传说物品"
+#   rarity: "legendary"
+# 
+# ================================================
+
 lottery:
   cost:
     currency-id: "coins"

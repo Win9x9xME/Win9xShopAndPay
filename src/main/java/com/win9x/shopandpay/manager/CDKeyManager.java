@@ -57,15 +57,7 @@ public class CDKeyManager {
                 usedByPlayers.addAll(usedList);
             }
 
-            Material material;
-            try {
-                material = org.bukkit.Material.valueOf(itemType);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid material type '" + itemType + "' in CDKey: " + key + ", using DIAMOND instead");
-                material = org.bukkit.Material.DIAMOND;
-            }
-            
-            ItemStack item = new ItemStack(material, amount);
+            ItemStack item = createItemStack(itemType, amount);
             if (!name.isEmpty()) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
@@ -187,5 +179,26 @@ public class CDKeyManager {
     public void reload() {
         cdKeys.clear();
         loadCDKeys();
+    }
+    
+    private ItemStack createItemStack(String itemType, int amount) {
+        Material material = Material.matchMaterial(itemType);
+        if (material != null && material != Material.AIR) {
+            return new ItemStack(material, amount);
+        }
+        
+        if (itemType.contains(":")) {
+            String[] parts = itemType.split(":", 2);
+            String namespace = parts[0].toLowerCase();
+            String key = parts[1].toLowerCase();
+            
+            material = Material.matchMaterial(namespace + ":" + key);
+            if (material != null && material != Material.AIR) {
+                return new ItemStack(material, amount);
+            }
+        }
+        
+        plugin.getLogger().warning("Invalid item type '" + itemType + "' in CDKey, using DIAMOND instead");
+        return new ItemStack(Material.DIAMOND, amount);
     }
 }

@@ -100,10 +100,19 @@ public class CDKeyCommand implements CommandExecutor {
             return true;
         }
 
-        Material material;
-        try {
-            material = Material.valueOf(args[1].toUpperCase());
-        } catch (IllegalArgumentException e) {
+        String itemType = args[1];
+        Material material = Material.matchMaterial(itemType);
+        
+        if (material == null || material == Material.AIR) {
+            if (itemType.contains(":")) {
+                String[] parts = itemType.split(":", 2);
+                String namespace = parts[0].toLowerCase();
+                String key = parts[1].toLowerCase();
+                material = Material.matchMaterial(namespace + ":" + key);
+            }
+        }
+        
+        if (material == null || material == Material.AIR) {
             sendMessage(sender, "error-invalid-material");
             return true;
         }

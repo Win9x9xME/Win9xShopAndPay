@@ -116,6 +116,99 @@ bank:
 
 ***
 
+## 1.0.2-RELEASE - 2026-07-21
+
+### 新增功能
+
+#### 1. CDKey自定义物品支持
+
+- CDKey系统现在支持任何在此插件之前加载的插件的自定义物品
+- 使用 `Material.matchMaterial()` 方法，支持命名空间格式
+- 物品类型支持两种格式：
+  - 原版物品：直接使用Material名称，如 `DIAMOND`, `EMERALD`
+  - 自定义物品：使用命名空间格式，如 `myplugin:special_item`
+
+**命令创建示例：**
+
+```
+/wsap cdkey create myplugin:special_sword 1 1
+```
+
+**配置文件创建示例（cdkeys.yml）：**
+
+```yaml
+cdkeys:
+  ABC123:
+    item-type: myplugin:special_sword
+    amount: 1
+    name: "&c特殊剑"
+    max-uses: 1
+```
+
+**修改的文件：**
+- `CDKeyManager.java` — 添加 `createItemStack()` 方法支持自定义物品
+- `CDKeyCommand.java` — 修改物品类型解析逻辑，支持命名空间格式
+
+***
+
+## Beta 8.0.0 - 2026-07-21
+
+### 新增功能
+
+#### 1. 自定义物品支持
+
+- 商店和抽奖机现在支持任何在此插件之前加载的插件的自定义物品
+- 使用 `Material.matchMaterial()` 方法，支持命名空间格式
+- 物品类型支持两种格式：
+  - 原版物品：直接使用Material名称，如 `DIAMOND`, `EMERALD`
+  - 自定义物品：使用命名空间格式，如 `myplugin:special_item`
+
+**配置示例（商店）：**
+
+```yaml
+my_custom_item:
+  type: myplugin:special_sword
+  amount: 1
+  name: "&c特殊剑"
+  slot: 16
+  prices:
+    coins: 1000.0
+```
+
+**配置示例（抽奖机）：**
+
+```yaml
+my_custom_prize:
+  type: myplugin:legendary_item
+  amount: 1
+  weight: 1.0
+  display-name: "&d传说物品"
+  rarity: "legendary"
+```
+
+**工作原理：**
+
+1. 首先尝试直接匹配物品类型
+2. 如果失败且类型包含 `:`，尝试解析为命名空间格式
+3. 使用 `Material.matchMaterial(namespace + ":" + key)` 查找物品
+4. 如果找到则创建对应物品，否则使用DIAMOND作为默认值
+
+**注意事项：**
+
+- 自定义物品必须在此插件之前加载的插件中注册
+- 物品类型名称需与插件注册时使用的名称完全一致
+- 如果自定义物品未找到，会自动回退到DIAMOND并输出警告日志
+
+### Bug修复
+
+#### 1. 抽奖机物品NBT标签问题
+
+- 修复了抽奖机抽出的物品带有特殊NBT标签的bug
+- 修改 `givePrize()` 方法，创建全新物品而不是克隆原始物品
+- 只保留基本属性：类型、数量、自定义名称
+
+***
+
 ## Beta 7.0.0 - 2026-07-12
 
 ### 新增功能
