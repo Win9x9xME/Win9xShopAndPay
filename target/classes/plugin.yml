@@ -1,6 +1,6 @@
 name: Win9xShopAndPay
 main: com.win9x.shopandpay.Win9xShopAndPay
-version: 1.0.2-RELEASE
+version: 1.0.3-SNAPSHOT-beta1
 api-version: '1.21'
 description: 一个拥有图形化购买界面、CDKey系统、自由市场、拍卖行、系统收购与AI助手的商店插件，支持多币种和Vault经济系统
 author: Win9x

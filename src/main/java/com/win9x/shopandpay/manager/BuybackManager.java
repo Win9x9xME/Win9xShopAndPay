@@ -23,6 +23,7 @@ public class BuybackManager {
 
     private final Win9xShopAndPay plugin;
     private final Map<Material, Double> prices = new ConcurrentHashMap<>();
+    private final Object saveLock = new Object();
     private File file;
     private FileConfiguration config;
 
@@ -70,32 +71,34 @@ public class BuybackManager {
     }
 
     public void load() {
-        file = new File(plugin.getDataFolder(), "buyback.yml");
-        if (!file.exists()) {
-            try (InputStream is = plugin.getResource("buyback.yml")) {
-                if (is != null) {
-                    Files.copy(is, file.toPath());
-                } else {
-                    file.createNewFile();
+        synchronized (saveLock) {
+            file = new File(plugin.getDataFolder(), "buyback.yml");
+            if (!file.exists()) {
+                try (InputStream is = plugin.getResource("buyback.yml")) {
+                    if (is != null) {
+                        Files.copy(is, file.toPath());
+                    } else {
+                        file.createNewFile();
+                    }
+                } catch (IOException e) {
+                    plugin.getLogger().severe("Failed to create buyback.yml");
+                    return;
                 }
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create buyback.yml");
+            }
+            config = YamlConfiguration.loadConfiguration(file);
+            prices.clear();
+
+            ConfigurationSection pricesSection = config.getConfigurationSection("prices");
+            if (pricesSection == null) {
                 return;
             }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
-        prices.clear();
-
-        ConfigurationSection pricesSection = config.getConfigurationSection("prices");
-        if (pricesSection == null) {
-            return;
-        }
-        for (String key : pricesSection.getKeys(false)) {
-            try {
-                Material material = Material.valueOf(key.toUpperCase());
-                prices.put(material, pricesSection.getDouble(key, 0.0));
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Unknown material in buyback.yml: " + key);
+            for (String key : pricesSection.getKeys(false)) {
+                try {
+                    Material material = Material.valueOf(key.toUpperCase());
+                    prices.put(material, pricesSection.getDouble(key, 0.0));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Unknown material in buyback.yml: " + key);
+                }
             }
         }
     }

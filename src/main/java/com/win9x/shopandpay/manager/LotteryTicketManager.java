@@ -33,6 +33,7 @@ public class LotteryTicketManager {
     private final Map<Integer, LotteryTicketRound> history = new ConcurrentHashMap<>();
     private LotteryTicketRound currentRound;
     private int lastRoundNumber;
+    private final Object saveLock = new Object();
     private File file;
     private FileConfiguration config;
 
@@ -87,9 +88,6 @@ public class LotteryTicketManager {
         if (!isEnabled()) {
             return BuyResult.DISABLED;
         }
-        if (currentRound == null || currentRound.isClosed()) {
-            return BuyResult.NOT_OPEN;
-        }
         if (!Double.isFinite(amount) || amount <= 0) {
             return BuyResult.INVALID_AMOUNT;
         }
@@ -99,8 +97,13 @@ public class LotteryTicketManager {
         if (!plugin.getCurrencyManager().withdraw(player, getCurrencyId(), amount)) {
             return BuyResult.INVALID_AMOUNT;
         }
-        currentRound.addPurchase(player.getUniqueId(), player.getName(), amount);
-        save();
+        synchronized (saveLock) {
+            if (currentRound == null || currentRound.isClosed()) {
+                return BuyResult.NOT_OPEN;
+            }
+            currentRound.addPurchase(player.getUniqueId(), player.getName(), amount);
+            save();
+        }
         return BuyResult.SUCCESS;
     }
 
@@ -121,37 +124,39 @@ public class LotteryTicketManager {
     }
 
     private void rollover(long now) {
-        LotteryTicketRound round = currentRound;
-        round.setClosed(true);
+        synchronized (saveLock) {
+            LotteryTicketRound round = currentRound;
+            round.setClosed(true);
 
-        if (round.getTotalPool() > 0 && !round.getPurchases().isEmpty()) {
-            UUID winner = drawWeightedWinner(round);
-            LotteryTicketRound.TicketPurchase purchase = round.getPurchases().get(winner);
-            double prize = round.getTotalPool() * getPayoutRatio();
-            round.setWinnerUUID(winner);
-            round.setWinnerName(purchase.getPlayerName());
-            round.setPrize(prize);
+            if (round.getTotalPool() > 0 && !round.getPurchases().isEmpty()) {
+                UUID winner = drawWeightedWinner(round);
+                LotteryTicketRound.TicketPurchase purchase = round.getPurchases().get(winner);
+                double prize = round.getTotalPool() * getPayoutRatio();
+                round.setWinnerUUID(winner);
+                round.setWinnerName(purchase.getPlayerName());
+                round.setPrize(prize);
 
-            history.put(round.getRoundNumber(), round);
-            trimHistory();
-            lastRoundNumber = round.getRoundNumber();
-            // Persist the result BEFORE paying out so a crash cannot cause a
-            // duplicate payout on the next reload.
-            save();
+                history.put(round.getRoundNumber(), round);
+                trimHistory();
+                lastRoundNumber = round.getRoundNumber();
+                // Persist the result BEFORE paying out so a crash cannot cause a
+                // duplicate payout on the next reload.
+                save();
 
-            OfflinePlayer winnerOffline = plugin.getServer().getOfflinePlayer(winner);
-            plugin.getCurrencyManager().deposit(winnerOffline, getCurrencyId(), prize);
-        } else {
-            history.put(round.getRoundNumber(), round);
-            trimHistory();
-            lastRoundNumber = round.getRoundNumber();
+                OfflinePlayer winnerOffline = plugin.getServer().getOfflinePlayer(winner);
+                plugin.getCurrencyManager().deposit(winnerOffline, getCurrencyId(), prize);
+            } else {
+                history.put(round.getRoundNumber(), round);
+                trimHistory();
+                lastRoundNumber = round.getRoundNumber();
+                save();
+            }
+
+            announce(round);
+
+            openNewRound(now);
             save();
         }
-
-        announce(round);
-
-        openNewRound(now);
-        save();
     }
 
     private UUID drawWeightedWinner(LotteryTicketRound round) {
@@ -208,38 +213,40 @@ public class LotteryTicketManager {
     }
 
     public void load() {
-        file = new File(plugin.getDataFolder(), "lottery-tickets.yml");
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create lottery-tickets.yml");
-                return;
-            }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
-        history.clear();
-
-        lastRoundNumber = config.getInt("last-round", 0);
-        ConfigurationSection histSec = config.getConfigurationSection("history");
-        if (histSec != null) {
-            for (String key : histSec.getKeys(false)) {
-                ConfigurationSection rs = histSec.getConfigurationSection(key);
-                if (rs == null) {
-                    continue;
-                }
-                LotteryTicketRound round = deserializeRound(rs);
-                if (round != null) {
-                    history.put(round.getRoundNumber(), round);
+        synchronized (saveLock) {
+            file = new File(plugin.getDataFolder(), "lottery-tickets.yml");
+            if (!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    plugin.getLogger().severe("Failed to create lottery-tickets.yml");
+                    return;
                 }
             }
-        }
+            config = YamlConfiguration.loadConfiguration(file);
+            history.clear();
 
-        ConfigurationSection curSec = config.getConfigurationSection("current");
-        if (curSec != null) {
-            currentRound = deserializeRound(curSec);
-            if (currentRound != null) {
-                lastRoundNumber = Math.max(lastRoundNumber, currentRound.getRoundNumber());
+            lastRoundNumber = config.getInt("last-round", 0);
+            ConfigurationSection histSec = config.getConfigurationSection("history");
+            if (histSec != null) {
+                for (String key : histSec.getKeys(false)) {
+                    ConfigurationSection rs = histSec.getConfigurationSection(key);
+                    if (rs == null) {
+                        continue;
+                    }
+                    LotteryTicketRound round = deserializeRound(rs);
+                    if (round != null) {
+                        history.put(round.getRoundNumber(), round);
+                    }
+                }
+            }
+
+            ConfigurationSection curSec = config.getConfigurationSection("current");
+            if (curSec != null) {
+                currentRound = deserializeRound(curSec);
+                if (currentRound != null) {
+                    lastRoundNumber = Math.max(lastRoundNumber, currentRound.getRoundNumber());
+                }
             }
         }
     }
@@ -279,22 +286,24 @@ public class LotteryTicketManager {
     }
 
     public void save() {
-        if (config == null) {
-            return;
-        }
-        config.set("last-round", lastRoundNumber);
-        config.set("history", null);
-        for (LotteryTicketRound round : history.values()) {
-            serializeRound(config, "history." + round.getRoundNumber(), round);
-        }
-        config.set("current", null);
-        if (currentRound != null) {
-            serializeRound(config, "current", currentRound);
-        }
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save lottery-tickets.yml");
+        synchronized (saveLock) {
+            if (config == null) {
+                return;
+            }
+            config.set("last-round", lastRoundNumber);
+            config.set("history", null);
+            for (LotteryTicketRound round : history.values()) {
+                serializeRound(config, "history." + round.getRoundNumber(), round);
+            }
+            config.set("current", null);
+            if (currentRound != null) {
+                serializeRound(config, "current", currentRound);
+            }
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to save lottery-tickets.yml");
+            }
         }
     }
 

@@ -26,6 +26,7 @@ public class LoanManager {
 
     private final Win9xShopAndPay plugin;
     private final Map<String, Loan> loans = new ConcurrentHashMap<>();
+    private final Object saveLock = new Object();
     private File file;
     private FileConfiguration config;
 
@@ -76,19 +77,21 @@ public class LoanManager {
         if (amount > getMaxAmount()) {
             return BorrowResult.TOO_LARGE;
         }
-        if (countActiveLoans(player.getUniqueId()) >= getMaxActiveLoans()) {
-            return BorrowResult.TOO_MANY_LOANS;
-        }
+        synchronized (saveLock) {
+            if (countActiveLoans(player.getUniqueId()) >= getMaxActiveLoans()) {
+                return BorrowResult.TOO_MANY_LOANS;
+            }
 
-        String id = generateId();
-        long now = System.currentTimeMillis();
-        long due = now + (long) getTermDays() * 24L * 60L * 60L * 1000L;
-        Loan loan = new Loan(id, player.getUniqueId(), amount, getInterestRate(),
-                getTermDays(), now, due, 0.0, Loan.Status.ACTIVE);
-        loans.put(id, loan);
-        // Persist the debt before paying out the principal so a crash cannot
-        // leave the player with funds but no recorded loan.
-        save();
+            String id = generateId();
+            long now = System.currentTimeMillis();
+            long due = now + (long) getTermDays() * 24L * 60L * 60L * 1000L;
+            Loan loan = new Loan(id, player.getUniqueId(), amount, getInterestRate(),
+                    getTermDays(), now, due, 0.0, Loan.Status.ACTIVE);
+            loans.put(id, loan);
+            // Persist the debt before paying out the principal so a crash cannot
+            // leave the player with funds but no recorded loan.
+            save();
+        }
         plugin.getCurrencyManager().deposit(player, getCurrencyId(), amount);
         return BorrowResult.SUCCESS;
     }
@@ -97,21 +100,23 @@ public class LoanManager {
         if (!Double.isFinite(amount) || amount <= 0) {
             return RepayResult.INVALID_AMOUNT;
         }
-        List<Loan> active = getActiveLoans(player.getUniqueId());
-        if (active.isEmpty()) {
-            return RepayResult.NO_ACTIVE_LOAN;
+        synchronized (saveLock) {
+            List<Loan> active = getActiveLoans(player.getUniqueId());
+            if (active.isEmpty()) {
+                return RepayResult.NO_ACTIVE_LOAN;
+            }
+
+            double toPay = Math.min(amount, totalRemaining(active));
+            if (!plugin.getCurrencyManager().withdraw(player, getCurrencyId(), toPay)) {
+                return RepayResult.INSUFFICIENT_FUNDS;
+            }
+
+            applyPayment(active, toPay);
+            save();
+
+            boolean anyRemaining = active.stream().anyMatch(l -> l.getRemaining() > 0.0);
+            return anyRemaining ? RepayResult.SUCCESS : RepayResult.FULLY_PAID;
         }
-
-        double toPay = Math.min(amount, totalRemaining(active));
-        if (!plugin.getCurrencyManager().withdraw(player, getCurrencyId(), toPay)) {
-            return RepayResult.INSUFFICIENT_FUNDS;
-        }
-
-        applyPayment(active, toPay);
-        save();
-
-        boolean anyRemaining = active.stream().anyMatch(l -> l.getRemaining() > 0.0);
-        return anyRemaining ? RepayResult.SUCCESS : RepayResult.FULLY_PAID;
     }
 
     private double totalRemaining(List<Loan> active) {
@@ -160,29 +165,31 @@ public class LoanManager {
      * allowing the player's balance to go negative.
      */
     public void tickOverdue() {
-        long now = System.currentTimeMillis();
-        boolean dirty = false;
-        for (Loan loan : loans.values()) {
-            if (loan.isOverdue(now)) {
-                double remaining = loan.getRemaining();
-                OfflinePlayer owner = plugin.getServer().getOfflinePlayer(loan.getPlayerId());
-                boolean collected = plugin.getCurrencyManager().withdrawForce(owner, getCurrencyId(), remaining);
-                if (collected) {
-                    loan.setPaidAmount(loan.getTotalOwed());
-                    loan.setStatus(Loan.Status.OVERDUE_COLLECTED);
-                    dirty = true;
-                    Player online = owner.getPlayer();
-                    if (online != null) {
-                        online.sendMessage("§c你的一笔贷款已逾期，系统已强制扣款 " + remaining
-                                + "（余额可能为负，请尽快补足）。");
+        synchronized (saveLock) {
+            long now = System.currentTimeMillis();
+            boolean dirty = false;
+            for (Loan loan : loans.values()) {
+                if (loan.isOverdue(now)) {
+                    double remaining = loan.getRemaining();
+                    OfflinePlayer owner = plugin.getServer().getOfflinePlayer(loan.getPlayerId());
+                    boolean collected = plugin.getCurrencyManager().withdrawForce(owner, getCurrencyId(), remaining);
+                    if (collected) {
+                        loan.setPaidAmount(loan.getTotalOwed());
+                        loan.setStatus(Loan.Status.OVERDUE_COLLECTED);
+                        dirty = true;
+                        Player online = owner.getPlayer();
+                        if (online != null) {
+                            online.sendMessage("§c你的一笔贷款已逾期，系统已强制扣款 " + remaining
+                                    + "（余额可能为负，请尽快补足）。");
+                        }
                     }
+                    // If collection failed (e.g. Vault rejected the overdraft), leave
+                    // the loan ACTIVE so the next tick retries it.
                 }
-                // If collection failed (e.g. Vault rejected the overdraft), leave
-                // the loan ACTIVE so the next tick retries it.
             }
-        }
-        if (dirty) {
-            save();
+            if (dirty) {
+                save();
+            }
         }
     }
 
@@ -195,63 +202,67 @@ public class LoanManager {
     }
 
     public void load() {
-        file = new File(plugin.getDataFolder(), "loans.yml");
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create loans.yml");
+        synchronized (saveLock) {
+            file = new File(plugin.getDataFolder(), "loans.yml");
+            if (!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    plugin.getLogger().severe("Failed to create loans.yml");
+                    return;
+                }
+            }
+            config = YamlConfiguration.loadConfiguration(file);
+            loans.clear();
+
+            ConfigurationSection root = config.getConfigurationSection("loans");
+            if (root == null) {
                 return;
             }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
-        loans.clear();
-
-        ConfigurationSection root = config.getConfigurationSection("loans");
-        if (root == null) {
-            return;
-        }
-        for (String id : root.getKeys(false)) {
-            ConfigurationSection s = root.getConfigurationSection(id);
-            if (s == null) {
-                continue;
-            }
-            try {
-                UUID playerId = UUID.fromString(s.getString("player-id"));
-                double principal = s.getDouble("principal", 0);
-                double rate = s.getDouble("interest-rate", 0);
-                int termDays = s.getInt("term-days", 7);
-                long startTime = s.getLong("start-time", 0);
-                long dueTime = s.getLong("due-time", 0);
-                double paid = s.getDouble("paid-amount", 0);
-                Loan.Status status = Loan.Status.valueOf(s.getString("status", "ACTIVE"));
-                loans.put(id, new Loan(id, playerId, principal, rate, termDays, startTime, dueTime, paid, status));
-            } catch (Exception e) {
-                plugin.getLogger().warning("Skipping invalid loan " + id);
+            for (String id : root.getKeys(false)) {
+                ConfigurationSection s = root.getConfigurationSection(id);
+                if (s == null) {
+                    continue;
+                }
+                try {
+                    UUID playerId = UUID.fromString(s.getString("player-id"));
+                    double principal = s.getDouble("principal", 0);
+                    double rate = s.getDouble("interest-rate", 0);
+                    int termDays = s.getInt("term-days", 7);
+                    long startTime = s.getLong("start-time", 0);
+                    long dueTime = s.getLong("due-time", 0);
+                    double paid = s.getDouble("paid-amount", 0);
+                    Loan.Status status = Loan.Status.valueOf(s.getString("status", "ACTIVE"));
+                    loans.put(id, new Loan(id, playerId, principal, rate, termDays, startTime, dueTime, paid, status));
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Skipping invalid loan " + id);
+                }
             }
         }
     }
 
     public void save() {
-        if (config == null) {
-            return;
-        }
-        config.set("loans", null);
-        for (Loan loan : loans.values()) {
-            String path = "loans." + loan.getId();
-            config.set(path + ".player-id", loan.getPlayerId().toString());
-            config.set(path + ".principal", loan.getPrincipal());
-            config.set(path + ".interest-rate", loan.getInterestRate());
-            config.set(path + ".term-days", loan.getTermDays());
-            config.set(path + ".start-time", loan.getStartTime());
-            config.set(path + ".due-time", loan.getDueTime());
-            config.set(path + ".paid-amount", loan.getPaidAmount());
-            config.set(path + ".status", loan.getStatus().name());
-        }
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save loans.yml");
+        synchronized (saveLock) {
+            if (config == null) {
+                return;
+            }
+            config.set("loans", null);
+            for (Loan loan : loans.values()) {
+                String path = "loans." + loan.getId();
+                config.set(path + ".player-id", loan.getPlayerId().toString());
+                config.set(path + ".principal", loan.getPrincipal());
+                config.set(path + ".interest-rate", loan.getInterestRate());
+                config.set(path + ".term-days", loan.getTermDays());
+                config.set(path + ".start-time", loan.getStartTime());
+                config.set(path + ".due-time", loan.getDueTime());
+                config.set(path + ".paid-amount", loan.getPaidAmount());
+                config.set(path + ".status", loan.getStatus().name());
+            }
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to save loans.yml");
+            }
         }
     }
 

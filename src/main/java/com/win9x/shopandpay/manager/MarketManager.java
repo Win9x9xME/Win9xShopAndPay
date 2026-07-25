@@ -28,6 +28,7 @@ public class MarketManager {
 
     private final Win9xShopAndPay plugin;
     private final Map<String, MarketListing> listings = new ConcurrentHashMap<>();
+    private final Object saveLock = new Object();
     private File file;
     private FileConfiguration config;
 
@@ -79,67 +80,74 @@ public class MarketManager {
         if (hand.getAmount() > getMaxListAmount()) {
             return ListResult.AMOUNT_TOO_LARGE;
         }
-        if (countListingsBy(seller.getUniqueId()) >= getMaxListingsPerPlayer()) {
-            return ListResult.TOO_MANY_LISTINGS;
-        }
 
         double fee = getListFee();
         if (fee > 0 && !plugin.getCurrencyManager().withdraw(seller, getCurrencyId(), fee)) {
             return ListResult.FEE_FAILED;
         }
 
-        ItemStack sold = hand.clone();
-        String id = generateId();
-        MarketListing listing = new MarketListing(id, seller.getUniqueId(),
-                seller.getName(), sold, price, getCurrencyId(), System.currentTimeMillis());
-        listings.put(id, listing);
+        synchronized (saveLock) {
+            if (countListingsBy(seller.getUniqueId()) >= getMaxListingsPerPlayer()) {
+                return ListResult.TOO_MANY_LISTINGS;
+            }
 
-        seller.getInventory().setItemInMainHand(null);
-        save();
+            ItemStack sold = hand.clone();
+            String id = generateId();
+            MarketListing listing = new MarketListing(id, seller.getUniqueId(),
+                    seller.getName(), sold, price, getCurrencyId(), System.currentTimeMillis());
+            listings.put(id, listing);
+
+            seller.getInventory().setItemInMainHand(null);
+            save();
+        }
         return ListResult.SUCCESS;
     }
 
     public BuyResult buyListing(Player buyer, String id) {
-        MarketListing listing = listings.get(id);
-        if (listing == null) {
-            return BuyResult.NOT_FOUND;
-        }
-        if (listing.getSellerId().equals(buyer.getUniqueId())) {
-            return BuyResult.OWN_ITEM;
-        }
-        if (!plugin.getCurrencyManager().withdraw(buyer, listing.getCurrencyId(), listing.getPrice())) {
-            return BuyResult.INSUFFICIENT_FUNDS;
-        }
+        synchronized (saveLock) {
+            MarketListing listing = listings.get(id);
+            if (listing == null) {
+                return BuyResult.NOT_FOUND;
+            }
+            if (listing.getSellerId().equals(buyer.getUniqueId())) {
+                return BuyResult.OWN_ITEM;
+            }
+            if (!plugin.getCurrencyManager().withdraw(buyer, listing.getCurrencyId(), listing.getPrice())) {
+                return BuyResult.INSUFFICIENT_FUNDS;
+            }
 
-        OfflinePlayer seller = plugin.getServer().getOfflinePlayer(listing.getSellerId());
-        plugin.getCurrencyManager().deposit(seller, listing.getCurrencyId(), listing.getPrice());
+            OfflinePlayer seller = plugin.getServer().getOfflinePlayer(listing.getSellerId());
+            plugin.getCurrencyManager().deposit(seller, listing.getCurrencyId(), listing.getPrice());
 
-        Map<Integer, ItemStack> overflow = buyer.getInventory().addItem(listing.getItem().clone());
-        for (ItemStack drop : overflow.values()) {
-            buyer.getWorld().dropItem(buyer.getLocation(), drop);
+            Map<Integer, ItemStack> overflow = buyer.getInventory().addItem(listing.getItem().clone());
+            for (ItemStack drop : overflow.values()) {
+                buyer.getWorld().dropItem(buyer.getLocation(), drop);
+            }
+
+            listings.remove(id);
+            save();
         }
-
-        listings.remove(id);
-        save();
         return BuyResult.SUCCESS;
     }
 
     public DelistResult delist(Player owner, String id) {
-        MarketListing listing = listings.get(id);
-        if (listing == null) {
-            return DelistResult.NOT_FOUND;
-        }
-        if (!listing.getSellerId().equals(owner.getUniqueId())) {
-            return DelistResult.NOT_OWNER;
-        }
+        synchronized (saveLock) {
+            MarketListing listing = listings.get(id);
+            if (listing == null) {
+                return DelistResult.NOT_FOUND;
+            }
+            if (!listing.getSellerId().equals(owner.getUniqueId())) {
+                return DelistResult.NOT_OWNER;
+            }
 
-        Map<Integer, ItemStack> overflow = owner.getInventory().addItem(listing.getItem().clone());
-        for (ItemStack drop : overflow.values()) {
-            owner.getWorld().dropItem(owner.getLocation(), drop);
-        }
+            Map<Integer, ItemStack> overflow = owner.getInventory().addItem(listing.getItem().clone());
+            for (ItemStack drop : overflow.values()) {
+                owner.getWorld().dropItem(owner.getLocation(), drop);
+            }
 
-        listings.remove(id);
-        save();
+            listings.remove(id);
+            save();
+        }
         return DelistResult.SUCCESS;
     }
 
@@ -180,62 +188,66 @@ public class MarketManager {
     }
 
     public void load() {
-        file = new File(plugin.getDataFolder(), "market.yml");
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create market.yml");
+        synchronized (saveLock) {
+            file = new File(plugin.getDataFolder(), "market.yml");
+            if (!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    plugin.getLogger().severe("Failed to create market.yml");
+                    return;
+                }
+            }
+            config = YamlConfiguration.loadConfiguration(file);
+            listings.clear();
+
+            ConfigurationSection root = config.getConfigurationSection("listings");
+            if (root == null) {
                 return;
             }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
-        listings.clear();
-
-        ConfigurationSection root = config.getConfigurationSection("listings");
-        if (root == null) {
-            return;
-        }
-        for (String id : root.getKeys(false)) {
-            ConfigurationSection s = root.getConfigurationSection(id);
-            if (s == null) {
-                continue;
-            }
-            try {
-                UUID sellerId = UUID.fromString(s.getString("seller-id"));
-                String sellerName = s.getString("seller-name", "?");
-                ItemStack item = s.getItemStack("item");
-                double price = s.getDouble("price", 0);
-                String currencyId = s.getString("currency-id", getCurrencyId());
-                long listedAt = s.getLong("listed-at", System.currentTimeMillis());
-                if (item == null) {
+            for (String id : root.getKeys(false)) {
+                ConfigurationSection s = root.getConfigurationSection(id);
+                if (s == null) {
                     continue;
                 }
-                listings.put(id, new MarketListing(id, sellerId, sellerName, item, price, currencyId, listedAt));
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Skipping invalid market listing " + id);
+                try {
+                    UUID sellerId = UUID.fromString(s.getString("seller-id"));
+                    String sellerName = s.getString("seller-name", "?");
+                    ItemStack item = s.getItemStack("item");
+                    double price = s.getDouble("price", 0);
+                    String currencyId = s.getString("currency-id", getCurrencyId());
+                    long listedAt = s.getLong("listed-at", System.currentTimeMillis());
+                    if (item == null) {
+                        continue;
+                    }
+                    listings.put(id, new MarketListing(id, sellerId, sellerName, item, price, currencyId, listedAt));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Skipping invalid market listing " + id);
+                }
             }
         }
     }
 
     public void save() {
-        if (config == null) {
-            return;
-        }
-        config.set("listings", null);
-        for (MarketListing listing : listings.values()) {
-            String path = "listings." + listing.getId();
-            config.set(path + ".seller-id", listing.getSellerId().toString());
-            config.set(path + ".seller-name", listing.getSellerName());
-            config.set(path + ".item", listing.getItem());
-            config.set(path + ".price", listing.getPrice());
-            config.set(path + ".currency-id", listing.getCurrencyId());
-            config.set(path + ".listed-at", listing.getListedAt());
-        }
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save market.yml");
+        synchronized (saveLock) {
+            if (config == null) {
+                return;
+            }
+            config.set("listings", null);
+            for (MarketListing listing : listings.values()) {
+                String path = "listings." + listing.getId();
+                config.set(path + ".seller-id", listing.getSellerId().toString());
+                config.set(path + ".seller-name", listing.getSellerName());
+                config.set(path + ".item", listing.getItem());
+                config.set(path + ".price", listing.getPrice());
+                config.set(path + ".currency-id", listing.getCurrencyId());
+                config.set(path + ".listed-at", listing.getListedAt());
+            }
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to save market.yml");
+            }
         }
     }
 
