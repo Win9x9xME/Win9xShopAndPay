@@ -1,0 +1,106 @@
+# ================================================
+# Win9xShopAndPay - GUI商店物品配置文件
+# ================================================
+#
+# 本文件用于配置 GUI 商店（/wsap gui shop）中的购买与出售物品。
+# 购买物品 (buy) 与 出售物品 (sell) 独立管理，均支持多页。
+#
+# 每个物品条目的可选字段:
+#   type:        物品Material名称（必填），支持"plugin:item"命名空间格式
+#   amount:      单个"购买/出售单位"的数量（默认 1）
+#   buy_price:   在购买商店中该物品的价格（仅作界面展示与扣费）
+#   sell_price:  在出售商店中该物品的价格（仅作界面展示与入账）
+#   name:        界面展示的物品名（支持 & 颜色代码）
+#   description: 界面展示的物品描述（支持 & 颜色代码，可为多行列表）
+#
+# 说明:
+# - name / description / buy_price / sell_price 仅影响 GUI 展示与交易数值，
+#   不会改变游戏内物品的真实属性。
+# - 翻页: 每页固定 28 格，物品按配置顺序自动分页。
+#
+# ================================================
+
+# 购买商店物品（玩家 -> 系统，花费钱币购买物品）
+buy:
+  diamond:
+    type: DIAMOND
+    amount: 1
+    buy_price: 100.0
+    name: "&b钻石"
+    description:
+      - "&7闪耀的钻石"
+      - "&f可用于装备强化"
+  emerald:
+    type: EMERALD
+    amount: 5
+    buy_price: 50.0
+    name: "&a绿宝石"
+    description:
+      - "&7翠绿的宝石"
+  iron_ingot:
+    type: IRON_INGOT
+    amount: 10
+    buy_price: 20.0
+    name: "&f铁锭"
+    description:
+      - "&7常见的金属材料"
+  gold_ingot:
+    type: GOLD_INGOT
+    amount: 5
+    buy_price: 50.0
+    name: "&6金锭"
+    description:
+      - "&7昂贵的金属"
+  netherite_ingot:
+    type: NETHERITE_INGOT
+    amount: 1
+    buy_price: 500.0
+    name: "&7下界合金锭"
+    description:
+      - "&b极其稀有"
+      - "&7下界的馈赠"
+
+# 出售商店物品（玩家 -> 系统，将物品卖给系统换取钱币）
+sell:
+  cobblestone:
+    type: COBBLESTONE
+    amount: 1
+    sell_price: 0.5
+    name: "&f圆石"
+    description:
+      - "&7常见的建筑方块"
+  dirt:
+    type: DIRT
+    amount: 1
+    sell_price: 0.2
+    name: "&6泥土"
+    description:
+      - "&7基础方块"
+  iron_ingot_sell:
+    type: IRON_INGOT
+    amount: 1
+    sell_price: 4.0
+    name: "&f铁锭"
+    description:
+      - "&7可回收利用"
+  gold_ingot_sell:
+    type: GOLD_INGOT
+    amount: 1
+    sell_price: 8.0
+    name: "&6金锭"
+    description:
+      - "&7贵重金属"
+  diamond_sell:
+    type: DIAMOND
+    amount: 1
+    sell_price: 50.0
+    name: "&b钻石"
+    description:
+      - "&7高价值物品"
+  emerald_sell:
+    type: EMERALD
+    amount: 1
+    sell_price: 60.0
+    name: "&a绿宝石"
+    description:
+      - "&7村民的最爱"
