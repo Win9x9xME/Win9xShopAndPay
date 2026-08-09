@@ -148,6 +148,13 @@ market:
   # 市场使用的币种id
   currency-id: "coins"
 
+# GUI商店设置 (由 /wsap gui shop 打开)
+gui-shop:
+  # GUI商店使用的币种id
+  currency-id: "coins"
+  # 每页商品数量（固定为28，一般无需修改）
+  items-per-page: 28
+
 # 系统收购设置
 buyback:
   # 是否启用系统收购

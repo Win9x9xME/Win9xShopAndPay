@@ -62,6 +62,8 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
                 return handleLotteryCommand(sender, args);
             case "market":
                 return handleMarketCommand(sender, args);
+            case "gui":
+                return handleGuiCommand(sender, args);
             case "buyback":
                 return handleBuybackCommand(sender);
             case "ai":
@@ -554,6 +556,7 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
         plugin.getEasterEggManager().reload();
         plugin.getMarketManager().reload();
         plugin.getBuybackManager().reload();
+        plugin.getGuiShopManager().reload();
         plugin.getLoanManager().reload();
         plugin.getLotteryTicketManager().reload();
         plugin.getBankManager().reload();
@@ -672,6 +675,42 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
             plugin.getMarketGUI().openBrowse(player, 0);
         }
         return true;
+    }
+
+    private boolean handleGuiCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sendGuiHelp(sender);
+            return true;
+        }
+
+        switch (args[1].toLowerCase()) {
+            case "shop":
+                return handleGuiShop(sender);
+            default:
+                sendGuiHelp(sender);
+                return true;
+        }
+    }
+
+    private boolean handleGuiShop(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sendMessage(sender, "only-player");
+            return true;
+        }
+
+        Player player = (Player) sender;
+        if (!player.hasPermission("win9xshopandpay.gui.shop")) {
+            sendMessage(player, "no-permission");
+            return true;
+        }
+
+        plugin.getGuiShopLauncherGUI().open(player);
+        return true;
+    }
+
+    private void sendGuiHelp(CommandSender sender) {
+        sendMessage(sender, "gui-help-title");
+        sendMessage(sender, "gui-help-shop");
     }
 
     private boolean handleBuybackCommand(CommandSender sender) {
@@ -1160,6 +1199,9 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
         if (sender.hasPermission("win9xshopandpay.market.use")) {
             sendMessage(sender, "help-market");
         }
+        if (sender.hasPermission("win9xshopandpay.gui.shop")) {
+            sendMessage(sender, "help-gui-shop");
+        }
         if (sender.hasPermission("win9xshopandpay.buyback")) {
             sendMessage(sender, "help-buyback");
         }
@@ -1264,6 +1306,9 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("win9xshopandpay.market.use")) {
                 suggestions.add("market");
             }
+            if (sender.hasPermission("win9xshopandpay.gui.shop")) {
+                suggestions.add("gui");
+            }
             if (sender.hasPermission("win9xshopandpay.buyback")) {
                 suggestions.add("buyback");
             }
@@ -1320,6 +1365,11 @@ public class Win9xShopAndPayCommand implements CommandExecutor, TabCompleter {
                     suggestions.add("my");
                     if (sender.hasPermission("win9xshopandpay.market.sell")) {
                         suggestions.add("sell");
+                    }
+                    break;
+                case "gui":
+                    if (sender.hasPermission("win9xshopandpay.gui.shop")) {
+                        suggestions.add("shop");
                     }
                     break;
                 case "loan":

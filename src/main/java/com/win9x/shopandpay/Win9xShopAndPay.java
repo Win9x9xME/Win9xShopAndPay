@@ -41,6 +41,10 @@ public class Win9xShopAndPay extends JavaPlugin {
     private ShopGUI shopGUI;
     private com.win9x.shopandpay.gui.MarketGUI marketGUI;
     private com.win9x.shopandpay.gui.BuybackGUI buybackGUI;
+    private com.win9x.shopandpay.gui.GuiShopLauncherGUI guiShopLauncherGUI;
+    private com.win9x.shopandpay.gui.GuiShopPanelGUI guiShopPanelGUI;
+    private com.win9x.shopandpay.gui.GuiSellPanelGUI guiSellPanelGUI;
+    private com.win9x.shopandpay.manager.GuiShopManager guiShopManager;
     private com.win9x.shopandpay.manager.AiManager aiManager;
     private com.win9x.shopandpay.manager.MarketManager marketManager;
     private com.win9x.shopandpay.manager.BuybackManager buybackManager;
@@ -72,6 +76,7 @@ public class Win9xShopAndPay extends JavaPlugin {
         easterEggManager = new EasterEggManager(this);
         marketManager = new com.win9x.shopandpay.manager.MarketManager(this);
         buybackManager = new com.win9x.shopandpay.manager.BuybackManager(this);
+        guiShopManager = new com.win9x.shopandpay.manager.GuiShopManager(this);
         aiManager = new com.win9x.shopandpay.manager.AiManager(this);
         loanManager = new com.win9x.shopandpay.manager.LoanManager(this);
         lotteryTicketManager = new com.win9x.shopandpay.manager.LotteryTicketManager(this);
@@ -263,6 +268,14 @@ public class Win9xShopAndPay extends JavaPlugin {
         pm.registerEvents(marketGUI, this);
         buybackGUI = new com.win9x.shopandpay.gui.BuybackGUI(this);
         pm.registerEvents(buybackGUI, this);
+
+        guiShopLauncherGUI = new com.win9x.shopandpay.gui.GuiShopLauncherGUI(this);
+        pm.registerEvents(guiShopLauncherGUI, this);
+        guiShopPanelGUI = new com.win9x.shopandpay.gui.GuiShopPanelGUI(this);
+        pm.registerEvents(guiShopPanelGUI, this);
+        guiSellPanelGUI = new com.win9x.shopandpay.gui.GuiSellPanelGUI(this);
+        pm.registerEvents(guiSellPanelGUI, this);
+
         pm.registerEvents(new com.win9x.shopandpay.listener.ChatListener(this), this);
         lotteryGUI = new LotteryGUI(this);
         pm.registerEvents(lotteryGUI, this);
@@ -334,6 +347,22 @@ public class Win9xShopAndPay extends JavaPlugin {
 
     public com.win9x.shopandpay.gui.BuybackGUI getBuybackGUI() {
         return buybackGUI;
+    }
+
+    public com.win9x.shopandpay.gui.GuiShopLauncherGUI getGuiShopLauncherGUI() {
+        return guiShopLauncherGUI;
+    }
+
+    public com.win9x.shopandpay.gui.GuiShopPanelGUI getGuiShopPanelGUI() {
+        return guiShopPanelGUI;
+    }
+
+    public com.win9x.shopandpay.gui.GuiSellPanelGUI getGuiSellPanelGUI() {
+        return guiSellPanelGUI;
+    }
+
+    public com.win9x.shopandpay.manager.GuiShopManager getGuiShopManager() {
+        return guiShopManager;
     }
 
     public com.win9x.shopandpay.manager.LoanManager getLoanManager() {

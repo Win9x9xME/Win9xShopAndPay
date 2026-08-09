@@ -59,6 +59,9 @@ permissions:
   win9xshopandpay.market.sell:
     description: 在自由市场上架物品的权限
     default: true
+  win9xshopandpay.gui.shop:
+    description: 使用GUI商店的权限 (/wsap gui shop)
+    default: true
   win9xshopandpay.buyback:
     description: 使用系统收购的权限
     default: true
